@@ -12,6 +12,7 @@ export type Database = {
           id: string;
           full_name?: string | null;
           email?: string | null;
+          created_at?: string;
         };
         Update: {
           full_name?: string | null;
