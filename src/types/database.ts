@@ -102,6 +102,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      stock_movements: {
+        Row: {
+          id: string;
+          product_id: string;
+          type: "ingreso" | "venta" | "merma" | "ajuste" | "devolucion";
+          quantity: number;
+          previous_stock: number;
+          new_stock: number;
+          user_id: string | null;
+          reason: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          product_id: string;
+          type: "ingreso" | "venta" | "merma" | "ajuste" | "devolucion";
+          quantity: number;
+          reason?: string | null;
+          // previous_stock, new_stock y user_id NO son insertables desde el
+          // frontend: los completa el trigger / el default de la base de datos.
+        };
+        Update: Record<string, never>; // inmutable: no se puede editar
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

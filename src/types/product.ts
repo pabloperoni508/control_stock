@@ -8,3 +8,9 @@ export type ProductInsert = Database["public"]["Tables"]["products"]["Insert"];
 export type ProductUpdate = Database["public"]["Tables"]["products"]["Update"];
 
 export type UnitType = Unit["type"];
+
+export interface ProductWithRelations extends Product {
+  category: Category | null;
+  stockUnit: Unit | null;
+  saleUnit: Unit | null;
+}
