@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ordersService } from "@/services/orderService";
+import { ordersService } from "@/services/ordersService";
 import { productsService } from "@/services/productsService";
 import { unitsService } from "@/services/unitsService";
 import { categoriesService } from "@/services/categoriesService";
@@ -71,6 +71,12 @@ export function useOrder(orderId: string) {
     await load();
   }
 
+  async function closeOrder() {
+    const updated = await ordersService.closeOrder(orderId);
+    await load();
+    return updated;
+  }
+
   return {
     order,
     items,
@@ -81,5 +87,6 @@ export function useOrder(orderId: string) {
     updateItemQuantity,
     togglePrepared,
     removeItem,
+    closeOrder,
   };
 }

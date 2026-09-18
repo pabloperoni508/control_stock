@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ordersService } from "@/services/orderService";
+import { ordersService } from "@/services/ordersService";
 import type { Order } from "@/types/order";
 
 export function useOpenOrders() {

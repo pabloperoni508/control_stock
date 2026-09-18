@@ -40,6 +40,15 @@ export const ordersService = {
     if (error) throw error;
   },
 
+  async closeOrder(orderId: string): Promise<Order> {
+    const { data, error } = await supabase.rpc("close_order", {
+      p_order_id: orderId,
+    });
+
+    if (error) throw error;
+    return data as Order;
+  },
+
   async getItems(orderId: string): Promise<OrderItem[]> {
     const { data, error } = await supabase
       .from("order_items")

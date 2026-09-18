@@ -3,11 +3,17 @@ import type { OrderItemWithDetails } from "@/types/order";
 
 interface OrderItemRowProps {
   item: OrderItemWithDetails;
+  readOnly?: boolean;
   onTogglePrepared: (prepared: boolean) => void;
   onRemove: () => void;
 }
 
-export function OrderItemRow({ item, onTogglePrepared, onRemove }: OrderItemRowProps) {
+export function OrderItemRow({
+  item,
+  readOnly = false,
+  onTogglePrepared,
+  onRemove,
+}: OrderItemRowProps) {
   return (
     <div
       style={{
@@ -23,6 +29,7 @@ export function OrderItemRow({ item, onTogglePrepared, onRemove }: OrderItemRowP
       <input
         type="checkbox"
         checked={item.prepared}
+        disabled={readOnly}
         onChange={(e) => onTogglePrepared(e.target.checked)}
         style={{ width: "20px", height: "20px" }}
       />
@@ -38,19 +45,21 @@ export function OrderItemRow({ item, onTogglePrepared, onRemove }: OrderItemRowP
         </div>
       </div>
 
-      <button
-        onClick={onRemove}
-        style={{
-          background: "none",
-          border: "none",
-          color: "var(--color-danger)",
-          cursor: "pointer",
-          fontSize: "1.2rem",
-        }}
-        aria-label="Quitar"
-      >
-        ×
-      </button>
+      {!readOnly && (
+        <button
+          onClick={onRemove}
+          style={{
+            background: "none",
+            border: "none",
+            color: "var(--color-danger)",
+            cursor: "pointer",
+            fontSize: "1.2rem",
+          }}
+          aria-label="Quitar"
+        >
+          ×
+        </button>
+      )}
     </div>
   );
 }
