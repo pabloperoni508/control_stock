@@ -7,6 +7,8 @@ import { ProductsPage } from "@/pages/products/ProductsPage";
 import { AnalyticsPage } from "@/pages/analytics/AnalyticsPage";
 import { BusinessPage } from "@/pages/business/BusinessPage";
 import { SettingsPage } from "@/pages/settings/SettingsPage";
+import { OrdersPage } from "@/pages/orders/OrdersPage";
+import { OrderDetailPage } from "@/pages/orders/OrderDetailPage";
 
 function App() {
   return (
@@ -60,6 +62,26 @@ function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <SettingsPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+                    <Route
+            path="/pedidos"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <OrdersPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pedidos/:orderId"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <OrderDetailPage />
                 </AppLayout>
               </ProtectedRoute>
             }

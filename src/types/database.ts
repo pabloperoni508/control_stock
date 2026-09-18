@@ -26,6 +26,7 @@ export type Database = {
           name: string;
           abbreviation: string;
           type: "weight" | "count" | "volume";
+          conversion_factor: number;
           created_at: string;
         };
         Insert: {
@@ -33,12 +34,14 @@ export type Database = {
           name: string;
           abbreviation: string;
           type: "weight" | "count" | "volume";
+          conversion_factor?: number;
           created_at?: string;
         };
         Update: {
           name?: string;
           abbreviation?: string;
           type?: "weight" | "count" | "volume";
+          conversion_factor?: number;
         };
         Relationships: [];
       };
@@ -120,10 +123,58 @@ export type Database = {
           type: "ingreso" | "venta" | "merma" | "ajuste" | "devolucion";
           quantity: number;
           reason?: string | null;
-          // previous_stock, new_stock y user_id NO son insertables desde el
-          // frontend: los completa el trigger / el default de la base de datos.
         };
-        Update: Record<string, never>; // inmutable: no se puede editar
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      orders: {
+        Row: {
+          id: string;
+          customer_name: string | null;
+          status: "open" | "completed";
+          user_id: string | null;
+          total: number | null;
+          created_at: string;
+          completed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          customer_name?: string | null;
+          status?: "open" | "completed";
+        };
+        Update: {
+          customer_name?: string | null;
+          status?: "open" | "completed";
+          total?: number | null;
+          completed_at?: string | null;
+        };
+        Relationships: [];
+      };
+      order_items: {
+        Row: {
+          id: string;
+          order_id: string;
+          product_id: string;
+          quantity: number;
+          unit_id: string;
+          prepared: boolean;
+          movement_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          product_id: string;
+          quantity: number;
+          unit_id: string;
+          prepared?: boolean;
+        };
+        Update: {
+          quantity?: number;
+          unit_id?: string;
+          prepared?: boolean;
+          movement_id?: string | null;
+        };
         Relationships: [];
       };
     };
