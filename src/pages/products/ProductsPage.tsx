@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useProducts } from "@/hooks/useProducts";
 import { unitsService } from "@/services/unitsService";
 import { categoriesService } from "@/services/categoriesService";
@@ -6,6 +7,7 @@ import { ProductCard } from "@/components/products/ProductCard";
 import { ProductSearchBar } from "@/components/products/ProductSearchBar";
 import { ProductForm, type ProductFormValues } from "@/components/products/ProductForm";
 import { ProductDetailModal } from "@/components/products/ProductDetailModal";
+import { OpenOrdersWidget } from "@/components/orders/OpenOrdersWidget";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import type { Category, ProductWithRelations, Unit } from "@/types/product";
@@ -13,6 +15,7 @@ import type { Category, ProductWithRelations, Unit } from "@/types/product";
 export function ProductsPage() {
   const { products, loading, error, reload, createProduct, updateProduct, setActive } =
     useProducts();
+  const navigate = useNavigate();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [units, setUnits] = useState<Unit[]>([]);
@@ -74,8 +77,15 @@ export function ProductsPage() {
         }}
       >
         <h1 style={{ margin: 0 }}>📦 Productos</h1>
-        <Button onClick={() => setCreating(true)}>+ Nuevo producto</Button>
+        <div style={{ display: "flex", gap: "0.75rem" }}>
+          <Button onClick={() => navigate("/pedidos")}>🛒 Vender</Button>
+          <Button variant="secondary" onClick={() => setCreating(true)}>
+            + Nuevo producto
+          </Button>
+        </div>
       </div>
+
+      <OpenOrdersWidget />
 
       <div style={{ marginBottom: "1.5rem" }}>
         <ProductSearchBar value={search} onChange={setSearch} />

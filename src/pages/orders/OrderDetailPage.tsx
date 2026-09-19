@@ -8,6 +8,7 @@ import { OrderItemRow } from "@/components/orders/OrderItemRow";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/utils/format";
+import { generateOrderTicket } from "@/utils/ticket";
 import type { Unit } from "@/types/product";
 
 export function OrderDetailPage() {
@@ -53,6 +54,11 @@ export function OrderDetailPage() {
     } finally {
       setClosing(false);
     }
+  }
+
+  function handleDownloadTicket() {
+    if (!order) return;
+    generateOrderTicket(order, items);
   }
 
   if (loading) return <p>Cargando pedido...</p>;
@@ -136,9 +142,9 @@ export function OrderDetailPage() {
       )}
 
       {isCompleted && (
-        <p style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: "1.5rem" }}>
-          El ticket descargable en PDF lo agregamos en la próxima fase.
-        </p>
+        <Button onClick={handleDownloadTicket} style={{ width: "100%", marginTop: "0.5rem" }}>
+          📄 Descargar ticket (PDF)
+        </Button>
       )}
     </div>
   );
