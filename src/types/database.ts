@@ -177,6 +177,34 @@ export type Database = {
         };
         Relationships: [];
       };
+            business_settings: {
+        Row: {
+          id: string;
+          global_min_stock_alert: boolean;
+          low_rotation_days: number;
+          default_sale_unit_id: string | null;
+          allow_negative_stock: boolean;
+          rounding_rule: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          global_min_stock_alert?: boolean;
+          low_rotation_days?: number;
+          default_sale_unit_id?: string | null;
+          allow_negative_stock?: boolean;
+          rounding_rule?: string | null;
+        };
+        Update: {
+          global_min_stock_alert?: boolean;
+          low_rotation_days?: number;
+          default_sale_unit_id?: string | null;
+          allow_negative_stock?: boolean;
+          rounding_rule?: string | null;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
         Functions: {
@@ -187,5 +215,6 @@ export type Database = {
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
+    
   };
 };

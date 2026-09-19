@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { analyticsService } from "@/services/analyticsService";
 import { useProducts } from "@/hooks/useProducts";
+import { useBusinessSettings } from "@/hooks/useBusinessSettings";
 import { movementsService } from "@/services/movementsService";
 import { getPeriodRange, summarizeSales, buildProductRanking } from "@/utils/analytics";
 import { MetricCard } from "@/components/analytics/MetricCard";
@@ -10,8 +11,6 @@ import { TopProductsList } from "@/components/analytics/TopProductsList";
 import { StockAlerts } from "@/components/analytics/StockAlerts";
 import { Button } from "@/components/ui/Button";
 import type { PeriodOption, SaleRecord } from "@/types/analytics";
-
-const LOW_ROTATION_DAYS = 20; // se vuelve configurable en la Fase 11
 
 const periodLabels: Record<PeriodOption, string> = {
   week: "Semana",
@@ -22,6 +21,7 @@ const periodLabels: Record<PeriodOption, string> = {
 export function AnalyticsPage() {
   const navigate = useNavigate();
   const { products } = useProducts();
+  const { settings } = useBusinessSettings();
 
   const [period, setPeriod] = useState<PeriodOption>("week");
   const [currentSales, setCurrentSales] = useState<SaleRecord[]>([]);
@@ -48,14 +48,13 @@ export function AnalyticsPage() {
   }, [period]);
 
   useEffect(() => {
-    // Última fecha de movimiento (de cualquier tipo) por producto, para rotación.
     async function loadLastMovements() {
       const map = new Map<string, string>();
       await Promise.all(
         products.map(async (p) => {
           const movements = await movementsService.getByProduct(p.id);
           if (movements.length > 0) {
-            map.set(p.id, movements[0].created_at); // ya vienen ordenados desc
+            map.set(p.id, movements[0].created_at);
           }
         })
       );
@@ -71,6 +70,8 @@ export function AnalyticsPage() {
   );
 
   const ranking = useMemo(() => buildProductRanking(currentSales), [currentSales]);
+
+  const lowRotationDays = settings?.low_rotation_days ?? 20;
 
   return (
     <div>
@@ -129,7 +130,7 @@ export function AnalyticsPage() {
             <h2 style={{ fontSize: "1.1rem", marginBottom: "0.75rem" }}>Alertas</h2>
             <StockAlerts
               products={products}
-              lowRotationDays={LOW_ROTATION_DAYS}
+              lowRotationDays={lowRotationDays}
               lastMovementByProduct={lastMovementByProduct}
             />
           </div>
