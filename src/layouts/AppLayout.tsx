@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/Button";
 
 const navItems = [
   { to: "/productos", label: "📦 Productos" },
@@ -11,7 +10,7 @@ const navItems = [
 ];
 
 export function AppLayout({ children }: { children: ReactNode }) {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   return (
@@ -62,9 +61,6 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <span style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
               {user?.email}
             </span>
-            <Button variant="secondary" onClick={() => signOut()}>
-              Cerrar sesión
-            </Button>
           </div>
         </header>
 

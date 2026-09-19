@@ -37,4 +37,18 @@ export const authService = {
       });
     }
   },
+
+  async updateFullName(userId: string, fullName: string) {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ full_name: fullName })
+      .eq("id", userId);
+
+    if (error) throw error;
+  },
+
+  async updatePassword(newPassword: string) {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+  },
 };
