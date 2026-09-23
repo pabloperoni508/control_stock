@@ -7,7 +7,13 @@ interface AddOrderItemFormProps {
   products: ProductWithRelations[];
   units: Unit[];
   submitting: boolean;
-  onAdd: (values: { product_id: string; quantity: number; unit_id: string }) => void;
+  onAdd: (values: {
+    product_id: string;
+    quantity: number;
+    unit_id: string;
+    discount_percent: number;
+    round_total: boolean;
+  }) => void;
 }
 
 export function AddOrderItemForm({ products, units, submitting, onAdd }: AddOrderItemFormProps) {
@@ -16,11 +22,11 @@ export function AddOrderItemForm({ products, units, submitting, onAdd }: AddOrde
   const [productId, setProductId] = useState("");
   const [quantity, setQuantity] = useState("");
   const [unitId, setUnitId] = useState("");
+  const [discountPercent, setDiscountPercent] = useState("0");
+  const [roundTotal, setRoundTotal] = useState(false);
 
   const selectedProduct = activeProducts.find((p) => p.id === productId);
 
-  // Solo se puede vender en unidades del mismo "tipo" que la unidad de
-  // stock del producto (ej: si el stock es en kg, se puede elegir g o kg).
   const compatibleUnits = useMemo(() => {
     if (!selectedProduct?.stockUnit) return [];
     return units.filter((u) => u.type === selectedProduct.stockUnit!.type);
@@ -34,10 +40,18 @@ export function AddOrderItemForm({ products, units, submitting, onAdd }: AddOrde
 
   function handleSubmit() {
     if (!productId || !unitId || !quantity) return;
-    onAdd({ product_id: productId, quantity: Number(quantity), unit_id: unitId });
+    onAdd({
+      product_id: productId,
+      quantity: Number(quantity),
+      unit_id: unitId,
+      discount_percent: Number(discountPercent) || 0,
+      round_total: roundTotal,
+    });
     setProductId("");
     setQuantity("");
     setUnitId("");
+    setDiscountPercent("0");
+    setRoundTotal(false);
   }
 
   const selectStyle = {
@@ -106,6 +120,37 @@ export function AddOrderItemForm({ products, units, submitting, onAdd }: AddOrde
           ))}
         </select>
       </div>
+
+      <div style={{ width: "100px" }}>
+        <Input
+          label="Descuento %"
+          type="number"
+          min={0}
+          max={100}
+          step="1"
+          value={discountPercent}
+          onChange={(e) => setDiscountPercent(e.target.value)}
+          style={{ marginBottom: 0 }}
+        />
+      </div>
+
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "0.4rem",
+          fontSize: "0.85rem",
+          paddingBottom: "0.6rem",
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={roundTotal}
+          onChange={(e) => setRoundTotal(e.target.checked)}
+          style={{ width: "18px", height: "18px" }}
+        />
+        Redondear
+      </label>
 
       <Button
         onClick={handleSubmit}

@@ -150,7 +150,7 @@ export type Database = {
         };
         Relationships: [];
       };
-      order_items: {
+            order_items: {
         Row: {
           id: string;
           order_id: string;
@@ -159,6 +159,8 @@ export type Database = {
           unit_id: string;
           prepared: boolean;
           movement_id: string | null;
+          discount_percent: number;
+          round_total: boolean;
           created_at: string;
         };
         Insert: {
@@ -168,12 +170,16 @@ export type Database = {
           quantity: number;
           unit_id: string;
           prepared?: boolean;
+          discount_percent?: number;
+          round_total?: boolean;
         };
         Update: {
           quantity?: number;
           unit_id?: string;
           prepared?: boolean;
           movement_id?: string | null;
+          discount_percent?: number;
+          round_total?: boolean;
         };
         Relationships: [];
       };

@@ -9,14 +9,16 @@ export function BusinessPage() {
   const [lowRotationDays, setLowRotationDays] = useState("20");
   const [globalMinStockAlert, setGlobalMinStockAlert] = useState(true);
   const [allowNegativeStock, setAllowNegativeStock] = useState(false);
+    const [roundingRule, setRoundingRule] = useState("none");
   const [submitting, setSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  useEffect(() => {
+     useEffect(() => {
     if (settings) {
       setLowRotationDays(String(settings.low_rotation_days));
       setGlobalMinStockAlert(settings.global_min_stock_alert);
       setAllowNegativeStock(settings.allow_negative_stock);
+      setRoundingRule(settings.rounding_rule ?? "none");
     }
   }, [settings]);
 
@@ -24,10 +26,11 @@ export function BusinessPage() {
     setSubmitting(true);
     setSaved(false);
     try {
-      await updateSettings({
+            await updateSettings({
         low_rotation_days: Number(lowRotationDays),
         global_min_stock_alert: globalMinStockAlert,
         allow_negative_stock: allowNegativeStock,
+        rounding_rule: roundingRule,
       });
       setSaved(true);
     } finally {
@@ -90,6 +93,28 @@ export function BusinessPage() {
         <p style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: "-0.7rem" }}>
           Esta opción queda guardada, pero aplicarla en el trigger de stock es una mejora futura.
         </p>
+                <div style={{ margin: "0.5rem 0" }}>
+          <label style={{ display: "block", fontSize: "0.85rem", marginBottom: "0.3rem" }}>
+            Redondeo de precios con descuento
+          </label>
+          <select
+            value={roundingRule}
+            onChange={(e) => setRoundingRule(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "0.6rem",
+              borderRadius: "var(--radius-sm)",
+              border: "1px solid var(--color-border)",
+            }}
+          >
+            <option value="none">Sin redondeo</option>
+            <option value="nearest_10">Al $10 más cercano</option>
+            <option value="nearest_100">Al $100 más cercano</option>
+          </select>
+          <p style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: "0.4rem" }}>
+            Se aplica solo a los ítems marcados como "Redondear" al vender.
+          </p>
+        </div>
 
         {saved && (
           <p style={{ color: "var(--color-success)", fontSize: "0.85rem" }}>

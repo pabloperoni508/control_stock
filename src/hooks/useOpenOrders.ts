@@ -23,5 +23,10 @@ export function useOpenOrders() {
     return order;
   }
 
-  return { orders, loading, reload: load, createOrder };
+  async function deleteOrder(orderId: string) {
+    await ordersService.delete(orderId);
+    await load();
+  }
+
+  return { orders, loading, reload: load, createOrder, deleteOrder };
 }

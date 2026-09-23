@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useOrder } from "@/hooks/useOrder";
 import { useProducts } from "@/hooks/useProducts";
+import { useBusinessSettings } from "@/hooks/useBusinessSettings";
 import { unitsService } from "@/services/unitsService";
 import { useEffect, useMemo, useState } from "react";
 import { AddOrderItemForm } from "@/components/orders/AddOrderItemForm";
@@ -10,6 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/utils/format";
 import { generateOrderTicket } from "@/utils/ticket";
 import type { Unit } from "@/types/product";
+import { calculateItemSubtotal } from "@/utils/pricing";
 
 export function OrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -25,6 +27,7 @@ export function OrderDetailPage() {
     closeOrder,
   } = useOrder(orderId ?? "");
   const { products } = useProducts();
+  const { settings } = useBusinessSettings();
   const [units, setUnits] = useState<Unit[]>([]);
   const [adding, setAdding] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -56,9 +59,9 @@ export function OrderDetailPage() {
     }
   }
 
-  function handleDownloadTicket() {
+      async function handleDownloadTicket() {
     if (!order) return;
-    generateOrderTicket(order, items);
+    await generateOrderTicket(order, items, settings?.rounding_rule ?? "none");
   }
 
   if (loading) return <p>Cargando pedido...</p>;
@@ -98,6 +101,7 @@ export function OrderDetailPage() {
           <OrderItemRow
             key={item.id}
             item={item}
+            subtotal={calculateItemSubtotal(item, settings?.rounding_rule ?? "none")}
             readOnly={isCompleted}
             onTogglePrepared={(prepared) => togglePrepared(item.id, prepared)}
             onRemove={() => removeItem(item.id)}

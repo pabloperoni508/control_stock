@@ -6,9 +6,11 @@ import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 
 export function OrdersPage() {
-  const { orders, loading, createOrder } = useOpenOrders();
+  const { orders, loading, createOrder, deleteOrder } = useOpenOrders();
   const [creating, setCreating] = useState(false);
   const [customerName, setCustomerName] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   async function handleCreate() {
@@ -16,6 +18,22 @@ export function OrdersPage() {
     setCreating(false);
     setCustomerName("");
     navigate(`/pedidos/${order.id}`);
+  }
+
+  async function handleDelete(orderId: string) {
+    if (!window.confirm("¿Querés borrar esta hoja de pedido? Esta acción no registra movimientos ni modifica el stock.")) {
+      return;
+    }
+
+    setDeletingId(orderId);
+    setDeleteError(null);
+    try {
+      await deleteOrder(orderId);
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Error al borrar la hoja de pedido");
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   return (
@@ -26,6 +44,10 @@ export function OrdersPage() {
       </div>
 
       {loading && <p>Cargando...</p>}
+
+      {deleteError && (
+        <p style={{ color: "var(--color-danger)" }}>❌ {deleteError}</p>
+      )}
 
       {!loading && orders.length === 0 && (
         <p style={{ color: "var(--color-text-muted)" }}>
@@ -50,6 +72,17 @@ export function OrdersPage() {
             <div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>
               {new Date(order.created_at).toLocaleString("es-AR")}
             </div>
+            <Button
+              variant="danger"
+              disabled={deletingId === order.id}
+              onClick={(event) => {
+                event.stopPropagation();
+                void handleDelete(order.id);
+              }}
+              style={{ width: "100%", marginTop: "0.75rem" }}
+            >
+              {deletingId === order.id ? "Borrando..." : "Borrar hoja"}
+            </Button>
           </div>
         ))}
       </div>
