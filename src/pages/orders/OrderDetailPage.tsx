@@ -1,7 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useOrder } from "@/hooks/useOrder";
 import { useProducts } from "@/hooks/useProducts";
-import { useBusinessSettings } from "@/hooks/useBusinessSettings";
 import { unitsService } from "@/services/unitsService";
 import { useEffect, useMemo, useState } from "react";
 import { AddOrderItemForm } from "@/components/orders/AddOrderItemForm";
@@ -27,7 +26,6 @@ export function OrderDetailPage() {
     closeOrder,
   } = useOrder(orderId ?? "");
   const { products } = useProducts();
-  const { settings } = useBusinessSettings();
   const [units, setUnits] = useState<Unit[]>([]);
   const [adding, setAdding] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -39,6 +37,10 @@ export function OrderDetailPage() {
 
   const isCompleted = order?.status === "completed";
   const allPrepared = items.length > 0 && items.every((i) => i.prepared);
+  const calculatedTotal = items.reduce(
+    (total, item) => total + calculateItemSubtotal(item),
+    0
+  );
 
   const canClose = useMemo(
     () => !isCompleted && allPrepared && !closing,
@@ -61,7 +63,7 @@ export function OrderDetailPage() {
 
       async function handleDownloadTicket() {
     if (!order) return;
-    await generateOrderTicket(order, items, settings?.rounding_rule ?? "none");
+        await generateOrderTicket(order, items);
   }
 
   if (loading) return <p>Cargando pedido...</p>;
@@ -79,7 +81,7 @@ export function OrderDetailPage() {
         {isCompleted && <Badge variant="success">Cerrado</Badge>}
       </div>
 
-      {isCompleted && order.total !== null && (
+      {items.length > 0 && (
         <div
           style={{
             fontSize: "1.3rem",
@@ -87,7 +89,7 @@ export function OrderDetailPage() {
             margin: "0.5rem 0 1.5rem",
           }}
         >
-          Total: {formatCurrency(order.total)}
+          Total: {formatCurrency(isCompleted ? order.total ?? calculatedTotal : calculatedTotal)}
         </div>
       )}
 
@@ -101,7 +103,7 @@ export function OrderDetailPage() {
           <OrderItemRow
             key={item.id}
             item={item}
-            subtotal={calculateItemSubtotal(item, settings?.rounding_rule ?? "none")}
+            subtotal={calculateItemSubtotal(item)}
             readOnly={isCompleted}
             onTogglePrepared={(prepared) => togglePrepared(item.id, prepared)}
             onRemove={() => removeItem(item.id)}

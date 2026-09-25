@@ -31,8 +31,7 @@ function loadImageAsDataUrl(url: string): Promise<{ dataUrl: string; width: numb
 
 export async function generateOrderTicket(
   order: Order,
-  items: OrderItemWithDetails[],
-  roundingRule: string = "none"
+  items: OrderItemWithDetails[]
 ) {
   const doc = new jsPDF({ unit: "mm", format: [80, 170 + items.length * 10] });
   const marginX = 5;
@@ -82,7 +81,7 @@ export async function generateOrderTicket(
     doc.text(productName, marginX, y);
     y += 4;
 
-    const lineTotal = calculateItemSubtotal(item, roundingRule);
+    const lineTotal = calculateItemSubtotal(item);
     total += lineTotal;
 
     doc.text(qtyLabel, marginX, y);

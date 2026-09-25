@@ -1,24 +1,33 @@
 import type { OrderItemWithDetails } from "@/types/order";
 
-export function calculateItemSubtotal(
-  item: OrderItemWithDetails,
-  roundingRule: string
+export function calculateSubtotal(
+  price: number,
+  quantity: number,
+  itemUnitFactor: number,
+  saleUnitFactor: number,
+  discountPercent = 0
 ): number {
-  const price = item.product?.price ?? 0;
-  const saleUnitFactor = item.product?.saleUnit?.conversion_factor ?? 1;
-  const itemUnitFactor = item.unit?.conversion_factor ?? 1;
-  const qtyInSaleUnit = (item.quantity * itemUnitFactor) / saleUnitFactor;
+  const safeSaleUnitFactor = saleUnitFactor > 0 ? saleUnitFactor : 1;
+  const safeItemUnitFactor = itemUnitFactor > 0 ? itemUnitFactor : safeSaleUnitFactor;
+  const qtyInSaleUnit = (quantity * safeItemUnitFactor) / safeSaleUnitFactor;
+  const discount = Math.min(100, Math.max(0, discountPercent));
 
-  let subtotal = price * qtyInSaleUnit;
-  subtotal = (subtotal * (100 - item.discount_percent)) / 100;
+  return (price * qtyInSaleUnit * (100 - discount)) / 100;
+}
 
-  if (item.round_total) {
-    if (roundingRule === "nearest_10") {
-      subtotal = Math.round(subtotal / 10) * 10;
-    } else if (roundingRule === "nearest_100") {
-      subtotal = Math.round(subtotal / 100) * 100;
-    }
-  }
+export function calculateItemSubtotal(item: OrderItemWithDetails): number {
+  if (!item.product) return 0;
 
-  return subtotal;
+  const stockUnitFactor = item.product.stockUnit?.conversion_factor ?? 1;
+  const saleUnitFactor =
+    item.product.saleUnit?.conversion_factor ?? stockUnitFactor;
+  const itemUnitFactor = item.unit?.conversion_factor ?? stockUnitFactor;
+
+  return calculateSubtotal(
+    item.product.price,
+    item.quantity,
+    itemUnitFactor,
+    saleUnitFactor,
+    item.discount_percent
+  );
 }

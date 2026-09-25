@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import type { ProductWithRelations, Unit } from "@/types/product";
+import { calculateSubtotal } from "@/utils/pricing";
+import { formatCurrency } from "@/utils/format";
 
 interface AddOrderItemFormProps {
   products: ProductWithRelations[];
@@ -12,7 +14,6 @@ interface AddOrderItemFormProps {
     quantity: number;
     unit_id: string;
     discount_percent: number;
-    round_total: boolean;
   }) => void;
 }
 
@@ -23,9 +24,21 @@ export function AddOrderItemForm({ products, units, submitting, onAdd }: AddOrde
   const [quantity, setQuantity] = useState("");
   const [unitId, setUnitId] = useState("");
   const [discountPercent, setDiscountPercent] = useState("0");
-  const [roundTotal, setRoundTotal] = useState(false);
+  const [discountEnabled, setDiscountEnabled] = useState(false);
 
   const selectedProduct = activeProducts.find((p) => p.id === productId);
+  const selectedUnit = units.find((unit) => unit.id === unitId);
+  const quantityValue = Number(quantity);
+  const effectiveDiscount = discountEnabled ? Number(discountPercent) || 0 : 0;
+  const subtotal = selectedProduct && selectedUnit && quantityValue > 0
+    ? calculateSubtotal(
+        selectedProduct.price,
+        quantityValue,
+        selectedUnit.conversion_factor,
+        selectedProduct.saleUnit?.conversion_factor ?? selectedProduct.stockUnit?.conversion_factor ?? 1,
+        effectiveDiscount
+      )
+    : null;
 
   const compatibleUnits = useMemo(() => {
     if (!selectedProduct?.stockUnit) return [];
@@ -44,14 +57,13 @@ export function AddOrderItemForm({ products, units, submitting, onAdd }: AddOrde
       product_id: productId,
       quantity: Number(quantity),
       unit_id: unitId,
-      discount_percent: Number(discountPercent) || 0,
-      round_total: roundTotal,
+      discount_percent: effectiveDiscount,
     });
     setProductId("");
     setQuantity("");
     setUnitId("");
     setDiscountPercent("0");
-    setRoundTotal(false);
+    setDiscountEnabled(false);
   }
 
   const selectStyle = {
@@ -130,6 +142,7 @@ export function AddOrderItemForm({ products, units, submitting, onAdd }: AddOrde
           step="1"
           value={discountPercent}
           onChange={(e) => setDiscountPercent(e.target.value)}
+          disabled={!discountEnabled}
           style={{ marginBottom: 0 }}
         />
       </div>
@@ -145,12 +158,18 @@ export function AddOrderItemForm({ products, units, submitting, onAdd }: AddOrde
       >
         <input
           type="checkbox"
-          checked={roundTotal}
-          onChange={(e) => setRoundTotal(e.target.checked)}
+          checked={discountEnabled}
+          onChange={(e) => setDiscountEnabled(e.target.checked)}
           style={{ width: "18px", height: "18px" }}
         />
-        Redondear
+        Habilitar descuento
       </label>
+
+      {subtotal !== null && (
+        <strong style={{ paddingBottom: "0.6rem", whiteSpace: "nowrap" }}>
+          Importe: {formatCurrency(subtotal)}
+        </strong>
+      )}
 
       <Button
         onClick={handleSubmit}
