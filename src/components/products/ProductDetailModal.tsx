@@ -50,7 +50,8 @@ export function ProductDetailModal({
         category_id: values.category_id,
         stock_unit_id: values.stock_unit_id,
         sale_unit_id: values.sale_unit_id,
-        price: values.price,
+        customer_price: values.customer_price,
+        business_price: values.business_price,
         min_stock: values.min_stock,
       });
       setMode("view");
@@ -124,43 +125,56 @@ export function ProductDetailModal({
     );
   }
 
+  const rowStyle = {
+    display: "flex",
+    justifyContent: "space-between",
+    padding: "0.5rem 0",
+    borderBottom: "1px solid var(--color-border)",
+  };
+
   return (
     <Modal title={product.name} onClose={onClose}>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-        <div style={{ display: "flex", gap: "0.5rem" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.3rem" }}>
           {!product.active && <Badge variant="neutral">Inactivo</Badge>}
           {lowStock && product.active && (
             <Badge variant="warning">⚠️ Queda poco producto</Badge>
           )}
         </div>
 
-        {product.category && (
-          <div style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
-            Categoría: {product.category.name}
-          </div>
+        {product.description && (
+          <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem" }}>
+            {product.description}
+          </p>
         )}
 
-        {product.description && <p>{product.description}</p>}
-
-        <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>
-          {formatCurrency(product.price)}
-          <span
-            style={{
-              fontSize: "0.85rem",
-              color: "var(--color-text-muted)",
-              fontWeight: 400,
-            }}
-          >
-            {" "}
-            / {product.saleUnit?.abbreviation ?? ""}
-          </span>
+        <div style={rowStyle}>
+          <span style={{ color: "var(--color-text-muted)" }}>Categoría</span>
+          <strong>{product.category?.name ?? "-"}</strong>
         </div>
 
-        <div>
-          Stock actual: <strong>{formatQuantity(product.current_stock, stockAbbr)}</strong>
+        <div style={rowStyle}>
+          <span style={{ color: "var(--color-text-muted)" }}>Precio consumidor final</span>
+          <strong>{formatCurrency(product.customer_price)}</strong>
         </div>
-        <div style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
-          Stock mínimo: {formatQuantity(product.min_stock, stockAbbr)}
+
+        <div style={rowStyle}>
+          <span style={{ color: "var(--color-text-muted)" }}>Precio negocio</span>
+          <strong>
+            {product.business_price !== null
+              ? formatCurrency(product.business_price)
+              : "Sin configurar"}
+          </strong>
+        </div>
+
+        <div style={rowStyle}>
+          <span style={{ color: "var(--color-text-muted)" }}>Stock actual</span>
+          <strong>{formatQuantity(product.current_stock, stockAbbr)}</strong>
+        </div>
+
+        <div style={{ ...rowStyle, borderBottom: "none" }}>
+          <span style={{ color: "var(--color-text-muted)" }}>Stock mínimo</span>
+          <strong>{formatQuantity(product.min_stock, stockAbbr)}</strong>
         </div>
 
         <div style={{ display: "flex", gap: "0.75rem", marginTop: "0.5rem", flexWrap: "wrap" }}>

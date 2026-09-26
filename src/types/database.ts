@@ -72,7 +72,8 @@ export type Database = {
           category_id: string | null;
           stock_unit_id: string | null;
           sale_unit_id: string | null;
-          price: number;
+          customer_price: number;
+          business_price: number | null;
           current_stock: number;
           min_stock: number;
           active: boolean;
@@ -87,7 +88,8 @@ export type Database = {
           category_id?: string | null;
           stock_unit_id?: string | null;
           sale_unit_id?: string | null;
-          price?: number;
+          customer_price?: number;
+          business_price?: number | null;
           current_stock?: number;
           min_stock?: number;
           active?: boolean;
@@ -99,7 +101,8 @@ export type Database = {
           category_id?: string | null;
           stock_unit_id?: string | null;
           sale_unit_id?: string | null;
-          price?: number;
+          customer_price?: number;
+          business_price?: number | null;
           min_stock?: number;
           active?: boolean;
         };
@@ -132,6 +135,7 @@ export type Database = {
           id: string;
           customer_name: string | null;
           status: "open" | "completed";
+          price_mode: "customer" | "business";
           user_id: string | null;
           total: number | null;
           created_at: string;
@@ -141,16 +145,18 @@ export type Database = {
           id?: string;
           customer_name?: string | null;
           status?: "open" | "completed";
+          price_mode?: "customer" | "business";
         };
         Update: {
           customer_name?: string | null;
           status?: "open" | "completed";
+          price_mode?: "customer" | "business";
           total?: number | null;
           completed_at?: string | null;
         };
         Relationships: [];
       };
-            order_items: {
+      order_items: {
         Row: {
           id: string;
           order_id: string;
@@ -183,7 +189,7 @@ export type Database = {
         };
         Relationships: [];
       };
-            business_settings: {
+      business_settings: {
         Row: {
           id: string;
           global_min_stock_alert: boolean;
@@ -213,14 +219,22 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-        Functions: {
+    Functions: {
       close_order: {
         Args: { p_order_id: string };
-        Returns: Database["public"]["Tables"]["orders"]["Row"];
+        Returns: {
+          id: string;
+          customer_name: string | null;
+          status: "open" | "completed";
+          price_mode: "customer" | "business";
+          user_id: string | null;
+          total: number | null;
+          created_at: string;
+          completed_at: string | null;
+        };
       };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
-    
   };
 };

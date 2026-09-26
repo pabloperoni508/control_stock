@@ -49,6 +49,30 @@ export const ordersService = {
     return data as Order;
   },
 
+  async updatePriceMode(orderId: string, priceMode: "customer" | "business"): Promise<Order> {
+    const { data, error } = await supabase
+      .from("orders")
+      .update({ price_mode: priceMode })
+      .eq("id", orderId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async getCompletedSince(from: Date): Promise<Order[]> {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("status", "completed")
+      .gte("completed_at", from.toISOString())
+      .order("completed_at", { ascending: false });
+
+    if (error) throw error;
+    return data ?? [];
+  },
+
   async getItems(orderId: string): Promise<OrderItem[]> {
     const { data, error } = await supabase
       .from("order_items")

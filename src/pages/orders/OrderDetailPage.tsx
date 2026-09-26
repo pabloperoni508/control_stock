@@ -1,16 +1,18 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useOrder } from "@/hooks/useOrder";
 import { useProducts } from "@/hooks/useProducts";
+import { useBusinessSettings } from "@/hooks/useBusinessSettings";
 import { unitsService } from "@/services/unitsService";
+import { ordersService } from "@/services/ordersService";
 import { useEffect, useMemo, useState } from "react";
 import { AddOrderItemForm } from "@/components/orders/AddOrderItemForm";
 import { OrderItemRow } from "@/components/orders/OrderItemRow";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { formatCurrency } from "@/utils/format";
+import { calculateItemSubtotal } from "@/utils/pricing";
 import { generateOrderTicket } from "@/utils/ticket";
 import type { Unit } from "@/types/product";
-import { calculateItemSubtotal } from "@/utils/pricing";
 
 export function OrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
@@ -20,16 +22,20 @@ export function OrderDetailPage() {
     items,
     loading,
     error,
+    reload,
     addItem,
     togglePrepared,
     removeItem,
     closeOrder,
   } = useOrder(orderId ?? "");
   const { products } = useProducts();
+  const { settings } = useBusinessSettings();
   const [units, setUnits] = useState<Unit[]>([]);
   const [adding, setAdding] = useState(false);
   const [closing, setClosing] = useState(false);
   const [closeError, setCloseError] = useState<string | null>(null);
+  const [changingMode, setChangingMode] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     unitsService.getAll().then(setUnits);
@@ -37,10 +43,7 @@ export function OrderDetailPage() {
 
   const isCompleted = order?.status === "completed";
   const allPrepared = items.length > 0 && items.every((i) => i.prepared);
-  const calculatedTotal = items.reduce(
-    (total, item) => total + calculateItemSubtotal(item),
-    0
-  );
+  const roundingRule = settings?.rounding_rule ?? "none";
 
   const canClose = useMemo(
     () => !isCompleted && allPrepared && !closing,
@@ -61,9 +64,35 @@ export function OrderDetailPage() {
     }
   }
 
-      async function handleDownloadTicket() {
+  async function handleDownloadTicket() {
     if (!order) return;
-        await generateOrderTicket(order, items);
+    await generateOrderTicket(order, items, roundingRule);
+  }
+
+  async function handleDeleteOrder() {
+    if (!order) return;
+    const confirmed = window.confirm(
+      "¿Seguro que querés eliminar esta hoja de pedido? Esta acción no se puede deshacer."
+    );
+    if (!confirmed) return;
+    setDeleting(true);
+    try {
+      await ordersService.delete(order.id);
+      navigate("/pedidos");
+    } finally {
+      setDeleting(false);
+    }
+  }
+
+  async function handlePriceModeClick(mode: "customer" | "business") {
+    if (!order) return;
+    setChangingMode(true);
+    try {
+      await ordersService.updatePriceMode(order.id, mode);
+      await reload();
+    } finally {
+      setChangingMode(false);
+    }
   }
 
   if (loading) return <p>Cargando pedido...</p>;
@@ -81,7 +110,36 @@ export function OrderDetailPage() {
         {isCompleted && <Badge variant="success">Cerrado</Badge>}
       </div>
 
-      {items.length > 0 && (
+      {!isCompleted && (
+        <div style={{ display: "flex", gap: "0.5rem", margin: "0.75rem 0" }}>
+          {(["customer", "business"] as const).map((mode) => (
+            <button
+              key={mode}
+              disabled={changingMode}
+              onClick={() => handlePriceModeClick(mode)}
+              style={{
+                padding: "0.4rem 0.9rem",
+                borderRadius: "var(--radius-sm)",
+                border: "1px solid var(--color-border)",
+                backgroundColor: order.price_mode === mode ? "var(--color-primary)" : "var(--color-surface)",
+                color: order.price_mode === mode ? "#fff" : "var(--color-text)",
+                cursor: "pointer",
+                fontSize: "0.85rem",
+              }}
+            >
+              {mode === "customer" ? "Consumidor final" : "Negocio"}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {isCompleted && (
+        <p style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", margin: "0.5rem 0" }}>
+          Precio aplicado: <strong>{order.price_mode === "business" ? "Negocio" : "Consumidor final"}</strong>
+        </p>
+      )}
+
+      {isCompleted && order.total !== null && (
         <div
           style={{
             fontSize: "1.3rem",
@@ -89,7 +147,7 @@ export function OrderDetailPage() {
             margin: "0.5rem 0 1.5rem",
           }}
         >
-          Total: {formatCurrency(isCompleted ? order.total ?? calculatedTotal : calculatedTotal)}
+          Total: {formatCurrency(order.total)}
         </div>
       )}
 
@@ -103,7 +161,7 @@ export function OrderDetailPage() {
           <OrderItemRow
             key={item.id}
             item={item}
-            subtotal={calculateItemSubtotal(item)}
+            subtotal={calculateItemSubtotal(item, roundingRule, order.price_mode)}
             readOnly={isCompleted}
             onTogglePrepared={(prepared) => togglePrepared(item.id, prepared)}
             onRemove={() => removeItem(item.id)}
@@ -142,6 +200,15 @@ export function OrderDetailPage() {
 
             <Button onClick={handleClose} disabled={!canClose} style={{ width: "100%" }}>
               {closing ? "Cerrando pedido..." : "✅ Pedido listo"}
+            </Button>
+
+            <Button
+              variant="danger"
+              onClick={handleDeleteOrder}
+              disabled={deleting}
+              style={{ width: "100%", marginTop: "0.75rem" }}
+            >
+              {deleting ? "Eliminando..." : "🗑️ Eliminar pedido"}
             </Button>
           </div>
         </>

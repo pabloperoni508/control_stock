@@ -51,7 +51,8 @@ export function ProductsPage() {
         category_id: values.category_id,
         stock_unit_id: values.stock_unit_id,
         sale_unit_id: values.sale_unit_id,
-        price: values.price,
+        customer_price: values.customer_price,
+        business_price: values.business_price,
         min_stock: values.min_stock,
       });
       setCreating(false);

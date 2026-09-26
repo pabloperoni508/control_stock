@@ -31,7 +31,8 @@ function loadImageAsDataUrl(url: string): Promise<{ dataUrl: string; width: numb
 
 export async function generateOrderTicket(
   order: Order,
-  items: OrderItemWithDetails[]
+  items: OrderItemWithDetails[],
+  roundingRule: string = "none"
 ) {
   const doc = new jsPDF({ unit: "mm", format: [80, 170 + items.length * 10] });
   const marginX = 5;
@@ -59,6 +60,13 @@ export async function generateOrderTicket(
   doc.text(`Cliente: ${order.customer_name || "Sin nombre"}`, marginX, y);
   y += 5;
 
+  doc.text(
+    `Precio: ${order.price_mode === "business" ? "Negocio" : "Consumidor final"}`,
+    marginX,
+    y
+  );
+  y += 5;
+
   const date = order.completed_at ? new Date(order.completed_at) : new Date();
   doc.text(`Fecha: ${date.toLocaleString("es-AR")}`, marginX, y);
   y += 7;
@@ -81,7 +89,7 @@ export async function generateOrderTicket(
     doc.text(productName, marginX, y);
     y += 4;
 
-    const lineTotal = calculateItemSubtotal(item);
+    const lineTotal = calculateItemSubtotal(item, roundingRule, order.price_mode);
     total += lineTotal;
 
     doc.text(qtyLabel, marginX, y);

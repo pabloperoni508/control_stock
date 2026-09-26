@@ -9,7 +9,8 @@ export interface ProductFormValues {
   category_id: string;
   stock_unit_id: string;
   sale_unit_id: string;
-  price: number;
+  customer_price: number;
+  business_price: number | null;
   min_stock: number;
 }
 
@@ -45,7 +46,18 @@ export function ProductForm({
   const [saleUnitId, setSaleUnitId] = useState(
     initialProduct?.sale_unit_id ?? ""
   );
-  const [price, setPrice] = useState(initialProduct?.price?.toString() ?? "0");
+  const [customerPrice, setCustomerPrice] = useState(
+    initialProduct?.customer_price?.toString() ?? "0"
+  );
+
+  const hasInitialBusinessPrice =
+    initialProduct?.business_price !== null && initialProduct?.business_price !== undefined;
+
+  const [businessPriceEnabled, setBusinessPriceEnabled] = useState(hasInitialBusinessPrice);
+  const [businessPrice, setBusinessPrice] = useState(
+    hasInitialBusinessPrice ? String(initialProduct!.business_price) : ""
+  );
+
   const [minStock, setMinStock] = useState(
     initialProduct?.min_stock?.toString() ?? "0"
   );
@@ -58,7 +70,8 @@ export function ProductForm({
       category_id: categoryId,
       stock_unit_id: stockUnitId,
       sale_unit_id: saleUnitId,
-      price: Number(price),
+      customer_price: Number(customerPrice),
+      business_price: businessPriceEnabled ? Number(businessPrice) : null,
       min_stock: Number(minStock),
     });
   }
@@ -152,28 +165,63 @@ export function ProductForm({
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: "1rem" }}>
-        <Input
-          label="Precio"
-          type="number"
-          min={0}
-          step="0.01"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
-          required
-          style={{ flex: 1 }}
+      <Input
+        label="Precio consumidor final"
+        type="number"
+        min={0}
+        step="0.01"
+        value={customerPrice}
+        onChange={(e) => setCustomerPrice(e.target.value)}
+        required
+      />
+
+      <label
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem",
+          fontSize: "0.85rem",
+          marginBottom: "0.5rem",
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={businessPriceEnabled}
+          onChange={(e) => setBusinessPriceEnabled(e.target.checked)}
+          style={{ width: "18px", height: "18px" }}
         />
-        <Input
-          label="Stock mínimo"
-          type="number"
-          min={0}
-          step="0.01"
-          value={minStock}
-          onChange={(e) => setMinStock(e.target.value)}
-          required
-          style={{ flex: 1 }}
-        />
-      </div>
+        Tiene precio de negocio
+      </label>
+
+      <Input
+        label="Precio negocio"
+        type="number"
+        min={0}
+        step="0.01"
+        value={businessPrice}
+        onChange={(e) => setBusinessPrice(e.target.value)}
+        disabled={!businessPriceEnabled}
+        required={businessPriceEnabled}
+        style={{
+          opacity: businessPriceEnabled ? 1 : 0.5,
+          backgroundColor: businessPriceEnabled ? undefined : "var(--color-bg)",
+        }}
+      />
+      {!businessPriceEnabled && (
+        <p style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: "-0.7rem" }}>
+          Sin activar: al vender a "Negocio" se usará el precio consumidor final.
+        </p>
+      )}
+
+      <Input
+        label="Stock mínimo"
+        type="number"
+        min={0}
+        step="0.01"
+        value={minStock}
+        onChange={(e) => setMinStock(e.target.value)}
+        required
+      />
 
       {error && (
         <p style={{ color: "var(--color-danger)", fontSize: "0.85rem" }}>

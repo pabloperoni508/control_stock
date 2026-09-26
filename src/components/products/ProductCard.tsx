@@ -48,7 +48,7 @@ export function ProductCard({ product, onOpenDetail }: ProductCardProps) {
       </div>
 
       <div style={{ fontSize: "1.3rem", fontWeight: 700 }}>
-        {formatCurrency(product.price)}
+        {formatCurrency(product.customer_price)}
         <span
           style={{
             fontSize: "0.8rem",
