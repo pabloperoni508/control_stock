@@ -38,9 +38,17 @@ export function OrdersPage() {
 
   return (
     <div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1.5rem" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", marginBottom: "1.5rem" }}>
         <h1 style={{ margin: 0 }}>Hojas de pedido</h1>
-        <Button onClick={() => setCreating(true)}>+ Nueva hoja de pedido</Button>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <Button variant="secondary" onClick={() => navigate("/pedidos/historial")}>
+            📋 Ver historial
+          </Button>
+          <Button variant="secondary" onClick={() => navigate("/pedidos/notas-credito")}>
+            🧾 Notas de crédito
+          </Button>
+          <Button onClick={() => setCreating(true)}>+ Nueva hoja de pedido</Button>
+        </div>
       </div>
 
       {loading && <p>Cargando...</p>}

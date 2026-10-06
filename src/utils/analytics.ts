@@ -7,7 +7,7 @@ export function getPeriodRange(period: PeriodOption, offset: number) {
 
   if (period === "week") {
     const day = now.getDay();
-    const mondayOffset = day === 0 ? -6 : 1 - day; // semana empieza en lunes
+    const mondayOffset = day === 0 ? -6 : 1 - day;
     from = new Date(now);
     from.setDate(now.getDate() + mondayOffset + offset * 7);
     from.setHours(0, 0, 0, 0);
@@ -59,16 +59,28 @@ function buildDailyTotals(
   }
 
   if (period === "month") {
+    // Siempre exactamente 4 barras ("Semana 1" a "Semana 4"), sin importar
+    // cuántos días tenga el mes: días 1-7, 8-14, 15-21, y 22-fin.
     const daysInMonth = new Date(from.getFullYear(), from.getMonth() + 1, 0).getDate();
-    const totals = new Array(daysInMonth).fill(0);
+    const totals = [0, 0, 0, 0];
+
     for (const s of sales) {
-      const d = new Date(s.created_at).getDate() - 1;
-      if (d >= 0 && d < daysInMonth) totals[d] += s.price * s.quantity;
+      const day = new Date(s.created_at).getDate();
+      let weekIndex: number;
+      if (day <= 7) weekIndex = 0;
+      else if (day <= 14) weekIndex = 1;
+      else if (day <= 21) weekIndex = 2;
+      else weekIndex = 3;
+      totals[weekIndex] += s.price * s.quantity;
     }
-    return totals.map((total, i) => ({ label: String(i + 1), total }));
+
+    void daysInMonth;
+    return ["Semana 1", "Semana 2", "Semana 3", "Semana 4"].map((label, i) => ({
+      label,
+      total: totals[i],
+    }));
   }
 
-  // year: por mes
   const labels = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
   const totals = new Array(12).fill(0);
   for (const s of sales) {

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useBusinessSettings } from "@/hooks/useBusinessSettings";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { UnitsManager } from "@/components/business/UnitsManager";
 
 export function BusinessPage() {
   const { settings, loading, error, updateSettings } = useBusinessSettings();
@@ -99,6 +100,17 @@ export function BusinessPage() {
         <Button onClick={handleSave} disabled={submitting} style={{ marginTop: "0.5rem" }}>
           {submitting ? "Guardando..." : "Guardar cambios"}
         </Button>
+      </div>
+      <div
+        style={{
+          backgroundColor: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius-md)",
+          padding: "1.5rem",
+          maxWidth: "600px",
+        }}
+      >
+        <UnitsManager />
       </div>
     </div>
   );

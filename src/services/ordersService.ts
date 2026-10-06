@@ -48,6 +48,14 @@ export const ordersService = {
     if (error) throw error;
     return data as Order;
   },
+    async cancelOrder(orderId: string): Promise<Order> {
+    const { data, error } = await supabase.rpc("cancel_order", {
+      p_order_id: orderId,
+    });
+
+    if (error) throw error;
+    return data as Order;
+  },
 
   async updatePriceMode(orderId: string, priceMode: "customer" | "business"): Promise<Order> {
     const { data, error } = await supabase

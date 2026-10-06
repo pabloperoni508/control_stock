@@ -1,8 +1,11 @@
+import { formatCurrency } from "@/utils/format";
+
 interface SimpleBarChartProps {
   data: { label: string; total: number }[];
+  showValues?: boolean;
 }
 
-export function SimpleBarChart({ data }: SimpleBarChartProps) {
+export function SimpleBarChart({ data, showValues = false }: SimpleBarChartProps) {
   const max = Math.max(...data.map((d) => d.total), 1);
 
   return (
@@ -11,7 +14,7 @@ export function SimpleBarChart({ data }: SimpleBarChartProps) {
         display: "flex",
         alignItems: "flex-end",
         gap: "4px",
-        height: "140px",
+        minHeight: "140px",
         padding: "1rem",
         backgroundColor: "var(--color-surface)",
         border: "1px solid var(--color-border)",
@@ -22,13 +25,13 @@ export function SimpleBarChart({ data }: SimpleBarChartProps) {
       {data.map((d, i) => (
         <div
           key={i}
-          title={`${d.label}: ${d.total}`}
+          title={`${d.label}: ${formatCurrency(d.total)}`}
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "flex-end",
-            height: "100%",
+            height: "140px",
             minWidth: data.length > 15 ? "8px" : "20px",
             flex: 1,
           }}
@@ -45,6 +48,19 @@ export function SimpleBarChart({ data }: SimpleBarChartProps) {
           {data.length <= 12 && (
             <div style={{ fontSize: "0.65rem", color: "var(--color-text-muted)", marginTop: "4px" }}>
               {d.label}
+            </div>
+          )}
+          {showValues && (
+            <div
+              style={{
+                fontSize: "0.65rem",
+                color: "var(--color-text)",
+                fontWeight: 600,
+                marginTop: "2px",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {d.total > 0 ? formatCurrency(d.total) : "-"}
             </div>
           )}
         </div>

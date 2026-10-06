@@ -134,7 +134,7 @@ export type Database = {
         Row: {
           id: string;
           customer_name: string | null;
-          status: "open" | "completed";
+          status: "open" | "completed" | "cancelled";
           price_mode: "customer" | "business";
           user_id: string | null;
           total: number | null;
@@ -144,12 +144,12 @@ export type Database = {
         Insert: {
           id?: string;
           customer_name?: string | null;
-          status?: "open" | "completed";
+          status?: "open" | "completed" | "cancelled";
           price_mode?: "customer" | "business";
         };
         Update: {
           customer_name?: string | null;
-          status?: "open" | "completed";
+          status?: "open" | "completed" | "cancelled";
           price_mode?: "customer" | "business";
           total?: number | null;
           completed_at?: string | null;
@@ -225,7 +225,20 @@ export type Database = {
         Returns: {
           id: string;
           customer_name: string | null;
-          status: "open" | "completed";
+          status: "open" | "completed" | "cancelled";
+          price_mode: "customer" | "business";
+          user_id: string | null;
+          total: number | null;
+          created_at: string;
+          completed_at: string | null;
+        };
+      };
+      cancel_order: {
+        Args: { p_order_id: string };
+        Returns: {
+          id: string;
+          customer_name: string | null;
+          status: "open" | "completed" | "cancelled";
           price_mode: "customer" | "business";
           user_id: string | null;
           total: number | null;

@@ -119,7 +119,7 @@ export function AnalyticsPage() {
             changePercent={summary.changePercent}
           />
 
-          <SimpleBarChart data={summary.dailyTotals} />
+          <SimpleBarChart data={summary.dailyTotals} showValues={period === "week"} />
 
           <div>
             <h2 style={{ fontSize: "1.1rem", marginBottom: "0.75rem" }}>🏆 Top productos</h2>

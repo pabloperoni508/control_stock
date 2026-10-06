@@ -36,18 +36,22 @@ export function OrderDetailPage() {
   const [closeError, setCloseError] = useState<string | null>(null);
   const [changingMode, setChangingMode] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   useEffect(() => {
     unitsService.getAll().then(setUnits);
   }, []);
 
   const isCompleted = order?.status === "completed";
+  const isCancelled = order?.status === "cancelled";
+  const isOpen = order?.status === "open";
   const allPrepared = items.length > 0 && items.every((i) => i.prepared);
   const roundingRule = settings?.rounding_rule ?? "none";
 
   const canClose = useMemo(
-    () => !isCompleted && allPrepared && !closing,
-    [isCompleted, allPrepared, closing]
+    () => isOpen && allPrepared && !closing,
+    [isOpen, allPrepared, closing]
   );
 
   async function handleClose() {
@@ -84,6 +88,26 @@ export function OrderDetailPage() {
     }
   }
 
+  async function handleCancelOrder() {
+    if (!order) return;
+    const confirmed = window.confirm(
+      "¿Cancelar este pedido? Se devolverá el stock vendido y se generará una nota de crédito. Esta acción no se puede deshacer."
+    );
+    if (!confirmed) return;
+    setCancelling(true);
+    setCancelError(null);
+    try {
+      await ordersService.cancelOrder(order.id);
+      await reload();
+    } catch (err) {
+      setCancelError(
+        err instanceof Error ? err.message : "Error al cancelar el pedido"
+      );
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   async function handlePriceModeClick(mode: "customer" | "business") {
     if (!order) return;
     setChangingMode(true);
@@ -108,9 +132,10 @@ export function OrderDetailPage() {
       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
         <h1 style={{ margin: 0 }}>{order.customer_name || "Pedido sin nombre"}</h1>
         {isCompleted && <Badge variant="success">Cerrado</Badge>}
+        {isCancelled && <Badge variant="danger">Cancelado</Badge>}
       </div>
 
-      {!isCompleted && (
+      {isOpen && (
         <div style={{ display: "flex", gap: "0.5rem", margin: "0.75rem 0" }}>
           {(["customer", "business"] as const).map((mode) => (
             <button
@@ -133,22 +158,29 @@ export function OrderDetailPage() {
         </div>
       )}
 
-      {isCompleted && (
+      {!isOpen && (
         <p style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", margin: "0.5rem 0" }}>
           Precio aplicado: <strong>{order.price_mode === "business" ? "Negocio" : "Consumidor final"}</strong>
         </p>
       )}
 
-      {isCompleted && order.total !== null && (
+      {!isOpen && order.total !== null && (
         <div
           style={{
             fontSize: "1.3rem",
             fontWeight: 700,
             margin: "0.5rem 0 1.5rem",
+            color: isCancelled ? "var(--color-danger)" : undefined,
           }}
         >
           Total: {formatCurrency(order.total)}
         </div>
+      )}
+
+      {cancelError && (
+        <p style={{ color: "var(--color-danger)", fontSize: "0.85rem" }}>
+          ❌ {cancelError}
+        </p>
       )}
 
       <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginBottom: "1.5rem" }}>
@@ -162,14 +194,14 @@ export function OrderDetailPage() {
             key={item.id}
             item={item}
             subtotal={calculateItemSubtotal(item, roundingRule, order.price_mode)}
-            readOnly={isCompleted}
+            readOnly={!isOpen}
             onTogglePrepared={(prepared) => togglePrepared(item.id, prepared)}
             onRemove={() => removeItem(item.id)}
           />
         ))}
       </div>
 
-      {!isCompleted && (
+      {isOpen && (
         <>
           <AddOrderItemForm
             products={products}
@@ -215,9 +247,30 @@ export function OrderDetailPage() {
       )}
 
       {isCompleted && (
-        <Button onClick={handleDownloadTicket} style={{ width: "100%", marginTop: "0.5rem" }}>
-          📄 Descargar ticket (PDF)
-        </Button>
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginTop: "0.5rem" }}>
+          <Button onClick={handleDownloadTicket} style={{ width: "100%" }}>
+            📄 Descargar ticket (PDF)
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleCancelOrder}
+            disabled={cancelling}
+            style={{ width: "100%" }}
+          >
+            {cancelling ? "Cancelando..." : "↩️ Cancelar pedido"}
+          </Button>
+        </div>
+      )}
+
+      {isCancelled && (
+        <>
+          <Button onClick={handleDownloadTicket} style={{ width: "100%", marginTop: "0.5rem" }}>
+            📄 Descargar ticket original (PDF)
+          </Button>
+          <p style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: "0.75rem" }}>
+            Este pedido fue cancelado. El stock vendido ya fue devuelto automáticamente.
+          </p>
+        </>
       )}
     </div>
   );
