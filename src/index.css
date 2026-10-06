@@ -1,14 +1,14 @@
 :root {
-  --color-bg: #faf7f2;
+  --color-bg: #f6f8ef;
   --color-surface: #ffffff;
-  --color-primary: #8a5a2c;
-  --color-primary-dark: #6e4622;
-  --color-text: #2b2420;
-  --color-text-muted: #726a63;
-  --color-border: #e7ddd0;
-  --color-success: #3f9142;
-  --color-warning: #c2860b;
-  --color-danger: #c23b3b;
+  --color-primary: #6b8e23;
+  --color-primary-dark: #55701b;
+  --color-text: #2d3321;
+  --color-text-muted: #6f7a5c;
+  --color-border: #dde4c8;
+  --color-success: #4c8c3f;
+  --color-warning: #b8860b;
+  --color-danger: #b4432f;
 
   --radius-sm: 6px;
   --radius-md: 12px;
@@ -58,6 +58,7 @@ body {
   font-weight: 700;
   font-size: 1.1rem;
   margin-bottom: 1.5rem;
+  color: var(--color-primary-dark);
 }
 
 .app-nav-link {
@@ -102,6 +103,7 @@ body {
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
+  color: var(--color-primary-dark);
 }
 
 .app-drawer-overlay {

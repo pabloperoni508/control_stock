@@ -4,6 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { to: "/productos", label: "📦 Productos" },
+  { to: "/pedidos/historial", label: "📋 Historial de pedidos" },
+  { to: "/pedidos/notas-credito", label: "🧾 Notas de crédito" },
   { to: "/analiticas", label: "📊 Analíticas" },
   { to: "/negocio", label: "🏪 Gestión del negocio" },
   { to: "/configuracion", label: "⚙️ Configuración" },
