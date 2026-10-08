@@ -9,6 +9,7 @@ import { AddOrderItemForm } from "@/components/orders/AddOrderItemForm";
 import { OrderItemRow } from "@/components/orders/OrderItemRow";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { Modal } from "@/components/ui/Modal";
 import { formatCurrency } from "@/utils/format";
 import { calculateItemSubtotal } from "@/utils/pricing";
 import { generateOrderTicket } from "@/utils/ticket";
@@ -38,6 +39,8 @@ export function OrderDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [updatingOwes, setUpdatingOwes] = useState(false);
+  const [showPaymentPrompt, setShowPaymentPrompt] = useState(false);
 
   useEffect(() => {
     unitsService.getAll().then(setUnits);
@@ -59,12 +62,27 @@ export function OrderDetailPage() {
     setCloseError(null);
     try {
       await closeOrder();
+      setShowPaymentPrompt(true);
     } catch (err) {
       setCloseError(
         err instanceof Error ? err.message : "Error al cerrar el pedido"
       );
     } finally {
       setClosing(false);
+    }
+  }
+
+  async function handlePaymentAnswer(owes: boolean) {
+    if (!order) return;
+    setUpdatingOwes(true);
+    try {
+      if (owes) {
+        await ordersService.updateOwes(order.id, true);
+        await reload();
+      }
+    } finally {
+      setUpdatingOwes(false);
+      setShowPaymentPrompt(false);
     }
   }
 
@@ -119,6 +137,17 @@ export function OrderDetailPage() {
     }
   }
 
+  async function handleOwesChange(owes: boolean) {
+    if (!order) return;
+    setUpdatingOwes(true);
+    try {
+      await ordersService.updateOwes(order.id, owes);
+      await reload();
+    } finally {
+      setUpdatingOwes(false);
+    }
+  }
+
   if (loading) return <p>Cargando pedido...</p>;
   if (error) return <p style={{ color: "var(--color-danger)" }}>❌ {error}</p>;
   if (!order) return <p>Pedido no encontrado.</p>;
@@ -129,10 +158,11 @@ export function OrderDetailPage() {
         ← Volver a hojas de pedido
       </Button>
 
-      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
         <h1 style={{ margin: 0 }}>{order.customer_name || "Pedido sin nombre"}</h1>
         {isCompleted && <Badge variant="success">Cerrado</Badge>}
         {isCancelled && <Badge variant="danger">Cancelado</Badge>}
+        {isCompleted && order.owes && <Badge variant="warning">Debe</Badge>}
       </div>
 
       {isOpen && (
@@ -169,12 +199,34 @@ export function OrderDetailPage() {
           style={{
             fontSize: "1.3rem",
             fontWeight: 700,
-            margin: "0.5rem 0 1.5rem",
+            margin: "0.5rem 0 1rem",
             color: isCancelled ? "var(--color-danger)" : undefined,
           }}
         >
           Total: {formatCurrency(order.total)}
         </div>
+      )}
+
+      {isCompleted && (
+        <label
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.5rem",
+            fontSize: "0.9rem",
+            margin: "0 0 1.5rem",
+            cursor: updatingOwes ? "not-allowed" : "pointer",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={order.owes}
+            disabled={updatingOwes}
+            onChange={(e) => handleOwesChange(e.target.checked)}
+            style={{ width: "18px", height: "18px" }}
+          />
+          Debe (entregado, pendiente de pago)
+        </label>
       )}
 
       {cancelError && (
@@ -257,7 +309,7 @@ export function OrderDetailPage() {
             disabled={cancelling}
             style={{ width: "100%" }}
           >
-            {cancelling ? "Cancelando..." : "↩️ Cancelar pedido"}
+            {cancelling ? "Cancelando..." : "↩️ Cancelar pedido (nota de crédito)"}
           </Button>
         </div>
       )}
@@ -271,6 +323,31 @@ export function OrderDetailPage() {
             Este pedido fue cancelado. El stock vendido ya fue devuelto automáticamente.
           </p>
         </>
+      )}
+
+      {showPaymentPrompt && (
+        <Modal title="Pedido cerrado ✅" onClose={() => setShowPaymentPrompt(false)}>
+          <p style={{ marginTop: 0, marginBottom: "1.25rem" }}>
+            ¿El cliente ya pagó este pedido?
+          </p>
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+            <Button
+              onClick={() => handlePaymentAnswer(false)}
+              disabled={updatingOwes}
+              style={{ flex: 1 }}
+            >
+              Pagó
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => handlePaymentAnswer(true)}
+              disabled={updatingOwes}
+              style={{ flex: 1 }}
+            >
+              Quedó debiendo
+            </Button>
+          </div>
+        </Modal>
       )}
     </div>
   );

@@ -8,6 +8,7 @@ import { ProductSearchBar } from "@/components/products/ProductSearchBar";
 import { ProductForm, type ProductFormValues } from "@/components/products/ProductForm";
 import { ProductDetailModal } from "@/components/products/ProductDetailModal";
 import { OpenOrdersWidget } from "@/components/orders/OpenOrdersWidget";
+import { OwedOrdersWidget } from "@/components/orders/OwedOrdersWidget";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import type { Category, ProductWithRelations, Unit } from "@/types/product";
@@ -87,6 +88,7 @@ export function ProductsPage() {
       </div>
 
       <OpenOrdersWidget />
+      <OwedOrdersWidget />
 
       <div style={{ marginBottom: "1.5rem" }}>
         <ProductSearchBar value={search} onChange={setSearch} />

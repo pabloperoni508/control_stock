@@ -136,6 +136,7 @@ export type Database = {
           customer_name: string | null;
           status: "open" | "completed" | "cancelled";
           price_mode: "customer" | "business";
+          owes: boolean;
           user_id: string | null;
           total: number | null;
           created_at: string;
@@ -146,11 +147,13 @@ export type Database = {
           customer_name?: string | null;
           status?: "open" | "completed" | "cancelled";
           price_mode?: "customer" | "business";
+          owes?: boolean;
         };
         Update: {
           customer_name?: string | null;
           status?: "open" | "completed" | "cancelled";
           price_mode?: "customer" | "business";
+          owes?: boolean;
           total?: number | null;
           completed_at?: string | null;
         };
@@ -227,6 +230,7 @@ export type Database = {
           customer_name: string | null;
           status: "open" | "completed" | "cancelled";
           price_mode: "customer" | "business";
+          owes: boolean;
           user_id: string | null;
           total: number | null;
           created_at: string;
@@ -240,6 +244,7 @@ export type Database = {
           customer_name: string | null;
           status: "open" | "completed" | "cancelled";
           price_mode: "customer" | "business";
+          owes: boolean;
           user_id: string | null;
           total: number | null;
           created_at: string;

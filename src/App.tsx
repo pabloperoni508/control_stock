@@ -8,8 +8,8 @@ import { AnalyticsPage } from "@/pages/analytics/AnalyticsPage";
 import { BusinessPage } from "@/pages/business/BusinessPage";
 import { SettingsPage } from "@/pages/settings/SettingsPage";
 import { OrdersPage } from "@/pages/orders/OrdersPage";
+import { OrderHistoryPage } from "@/pages/orders/OrderHistoryPage";
 import { OrderDetailPage } from "@/pages/orders/OrderDetailPage";
-import { OrderCreditNotesPage } from "@/pages/orders/OrderCreditNotesPage";
 
 function App() {
   return (
@@ -33,6 +33,36 @@ function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <ProductsPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pedidos"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <OrdersPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pedidos/historial"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <OrderHistoryPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pedidos/:orderId"
+            element={
+              <ProtectedRoute>
+                <AppLayout>
+                  <OrderDetailPage />
                 </AppLayout>
               </ProtectedRoute>
             }
@@ -63,37 +93,6 @@ function App() {
               <ProtectedRoute>
                 <AppLayout>
                   <SettingsPage />
-                </AppLayout>
-              </ProtectedRoute>
-            }
-          />
-                    <Route
-            path="/pedidos"
-            element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <OrdersPage />
-                </AppLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/pedidos/:orderId"
-            element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <OrderDetailPage />
-                </AppLayout>
-              </ProtectedRoute>
-            }
-          />
-          tsx
-          <Route
-            path="/pedidos/notas-credito"
-            element={
-              <ProtectedRoute>
-                <AppLayout>
-                  <OrderCreditNotesPage />
                 </AppLayout>
               </ProtectedRoute>
             }

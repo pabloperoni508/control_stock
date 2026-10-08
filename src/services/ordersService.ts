@@ -48,7 +48,8 @@ export const ordersService = {
     if (error) throw error;
     return data as Order;
   },
-    async cancelOrder(orderId: string): Promise<Order> {
+
+  async cancelOrder(orderId: string): Promise<Order> {
     const { data, error } = await supabase.rpc("cancel_order", {
       p_order_id: orderId,
     });
@@ -69,7 +70,45 @@ export const ordersService = {
     return data;
   },
 
-  async getCompletedSince(from: Date): Promise<Order[]> {
+  async updateOwes(orderId: string, owes: boolean): Promise<Order> {
+    const { data, error } = await supabase
+      .from("orders")
+      .update({ owes })
+      .eq("id", orderId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async getOwed(): Promise<Order[]> {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("status", "completed")
+      .eq("owes", true)
+      .order("completed_at", { ascending: false });
+
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  async getAllCompleted(): Promise<Order[]> {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("status", "completed")
+      .order("completed_at", { ascending: false });
+
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  async getCompletedToday(): Promise<Order[]> {
+    const from = new Date();
+    from.setHours(0, 0, 0, 0);
+
     const { data, error } = await supabase
       .from("orders")
       .select("*")
@@ -79,6 +118,24 @@ export const ordersService = {
 
     if (error) throw error;
     return data ?? [];
+  },
+
+  async getItemsSummary(orderId: string): Promise<string[]> {
+    const { data, error } = await supabase
+      .from("order_items")
+      .select("quantity, product:products(name), unit:units(abbreviation)")
+      .eq("order_id", orderId);
+
+    if (error) throw error;
+
+    return (data ?? []).map((row) => {
+      const r = row as unknown as {
+        quantity: number;
+        product: { name: string } | null;
+        unit: { abbreviation: string } | null;
+      };
+      return `${r.quantity} ${r.unit?.abbreviation ?? ""} ${r.product?.name ?? "Producto"}`.trim();
+    });
   },
 
   async getItems(orderId: string): Promise<OrderItem[]> {

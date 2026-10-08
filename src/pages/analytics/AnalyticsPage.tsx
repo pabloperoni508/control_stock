@@ -11,6 +11,7 @@ import { TopProductsList } from "@/components/analytics/TopProductsList";
 import { StockAlerts } from "@/components/analytics/StockAlerts";
 import { Button } from "@/components/ui/Button";
 import type { PeriodOption, SaleRecord } from "@/types/analytics";
+import { TodaySummary } from "@/components/analytics/TodaySummary";
 
 const periodLabels: Record<PeriodOption, string> = {
   week: "Semana",
@@ -124,6 +125,11 @@ export function AnalyticsPage() {
           <div>
             <h2 style={{ fontSize: "1.1rem", marginBottom: "0.75rem" }}>🏆 Top productos</h2>
             <TopProductsList ranking={ranking} />
+          </div>
+
+          <div>
+            <h2 style={{ fontSize: "1.1rem", marginBottom: "0.75rem" }}>📅 Resumen del día</h2>
+            <TodaySummary />
           </div>
 
           <div>
