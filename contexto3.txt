@@ -1,0 +1,719 @@
+﻿=== src/components/ui/Button.tsx
+import type { ButtonHTMLAttributes, CSSProperties } from "react";
+
+type Variant = "primary" | "secondary" | "danger" | "ghost";
+
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: Variant;
+}
+
+const variantStyles: Record<Variant, CSSProperties> = {
+  primary: {
+    backgroundColor: "var(--color-primary)",
+    color: "#fff",
+    border: "none",
+  },
+  secondary: {
+    backgroundColor: "var(--color-surface)",
+    color: "var(--color-text)",
+    border: "1px solid var(--color-border)",
+  },
+  danger: {
+    backgroundColor: "var(--color-danger)",
+    color: "#fff",
+    border: "none",
+  },
+  ghost: {
+    backgroundColor: "transparent",
+    color: "var(--color-text)",
+    border: "none",
+  },
+};
+
+export function Button({ variant = "primary", style, ...props }: ButtonProps) {
+  return (
+    <button
+      {...props}
+      style={{
+        padding: "0.6rem 1.1rem",
+        borderRadius: "var(--radius-sm)",
+        fontSize: "0.95rem",
+        cursor: props.disabled ? "not-allowed" : "pointer",
+        opacity: props.disabled ? 0.6 : 1,
+        fontWeight: 600,
+        ...variantStyles[variant],
+        ...style,
+      }}
+    />
+  );
+}
+=== src/components/ui/Input.tsx
+import type { InputHTMLAttributes } from "react";
+
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+}
+
+export function Input({ label, id, style, ...props }: InputProps) {
+  return (
+    <div style={{ marginBottom: "1rem" }}>
+      {label && (
+        <label
+          htmlFor={id}
+          style={{
+            display: "block",
+            marginBottom: "0.3rem",
+            fontSize: "0.85rem",
+            color: "var(--color-text-muted)",
+          }}
+        >
+          {label}
+        </label>
+      )}
+      <input
+        id={id}
+        {...props}
+        style={{
+          width: "100%",
+          padding: "0.6rem",
+          borderRadius: "var(--radius-sm)",
+          border: "1px solid var(--color-border)",
+          fontSize: "0.95rem",
+          ...style,
+        }}
+      />
+    </div>
+  );
+}
+=== src/components/ui/Modal.tsx
+import type { ReactNode } from "react";
+
+interface ModalProps {
+  title: string;
+  onClose: () => void;
+  children: ReactNode;
+}
+
+export function Modal({ title, onClose, children }: ModalProps) {
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(0,0,0,0.4)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "1rem",
+        zIndex: 100,
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          backgroundColor: "var(--color-surface)",
+          borderRadius: "var(--radius-lg)",
+          padding: "1.5rem",
+          width: "100%",
+          maxWidth: "480px",
+          maxHeight: "90vh",
+          overflowY: "auto",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "1rem",
+          }}
+        >
+          <h2 style={{ margin: 0, fontSize: "1.2rem" }}>{title}</h2>
+          <button
+            onClick={onClose}
+            style={{
+              background: "none",
+              border: "none",
+              fontSize: "1.3rem",
+              cursor: "pointer",
+              color: "var(--color-text-muted)",
+            }}
+            aria-label="Cerrar"
+          >
+            ×
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+=== src/components/ui/Badge.tsx
+import type { ReactNode } from "react";
+
+type BadgeVariant = "success" | "warning" | "danger" | "neutral";
+
+interface BadgeProps {
+  children: ReactNode;
+  variant?: BadgeVariant;
+}
+
+const colors: Record<BadgeVariant, { bg: string; text: string }> = {
+  success: { bg: "#e5f3e6", text: "var(--color-success)" },
+  warning: { bg: "#fbf0dc", text: "var(--color-warning)" },
+  danger: { bg: "#fbe3e3", text: "var(--color-danger)" },
+  neutral: { bg: "#eee8e0", text: "var(--color-text-muted)" },
+};
+
+export function Badge({ children, variant = "neutral" }: BadgeProps) {
+  const { bg, text } = colors[variant];
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        padding: "0.2rem 0.6rem",
+        borderRadius: "999px",
+        fontSize: "0.75rem",
+        fontWeight: 600,
+        backgroundColor: bg,
+        color: text,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+=== src/utils/format.ts
+export function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("es-AR", {
+    style: "currency",
+    currency: "ARS",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+export function formatQuantity(value: number, abbreviation: string): string {
+  const formatted = Number.isInteger(value)
+    ? value.toString()
+    : value.toFixed(2).replace(/\.?0+$/, "");
+  return `${formatted} ${abbreviation}`;
+}
+=== src/App.css
+.counter {
+  font-size: 16px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+  margin-bottom: 24px;
+
+  &:hover {
+    border-color: var(--accent-border);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+.hero {
+  position: relative;
+
+  .base,
+  .framework,
+  .vite {
+    inset-inline: 0;
+    margin: 0 auto;
+  }
+
+  .base {
+    width: 170px;
+    position: relative;
+    z-index: 0;
+  }
+
+  .framework,
+  .vite {
+    position: absolute;
+  }
+
+  .framework {
+    z-index: 1;
+    top: 34px;
+    height: 28px;
+    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
+      scale(1.4);
+  }
+
+  .vite {
+    z-index: 0;
+    top: 107px;
+    height: 26px;
+    width: auto;
+    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
+      scale(0.8);
+  }
+}
+
+#center {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  place-content: center;
+  place-items: center;
+  flex-grow: 1;
+
+  @media (max-width: 1024px) {
+    padding: 32px 20px 24px;
+    gap: 18px;
+  }
+}
+
+#next-steps {
+  display: flex;
+  border-top: 1px solid var(--border);
+  text-align: left;
+
+  & > div {
+    flex: 1 1 0;
+    padding: 32px;
+    @media (max-width: 1024px) {
+      padding: 24px 20px;
+    }
+  }
+
+  .icon {
+    margin-bottom: 16px;
+    width: 22px;
+    height: 22px;
+  }
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+#docs {
+  border-right: 1px solid var(--border);
+
+  @media (max-width: 1024px) {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+#next-steps ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  gap: 8px;
+  margin: 32px 0 0;
+
+  .logo {
+    height: 18px;
+  }
+
+  a {
+    color: var(--text-h);
+    font-size: 16px;
+    border-radius: 6px;
+    background: var(--social-bg);
+    display: flex;
+    padding: 6px 12px;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: box-shadow 0.3s;
+
+    &:hover {
+      box-shadow: var(--shadow);
+    }
+    .button-icon {
+      height: 18px;
+      width: 18px;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    margin-top: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    li {
+      flex: 1 1 calc(50% - 8px);
+    }
+
+    a {
+      width: 100%;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+  }
+}
+
+#spacer {
+  height: 88px;
+  border-top: 1px solid var(--border);
+  @media (max-width: 1024px) {
+    height: 48px;
+  }
+}
+
+.ticks {
+  position: relative;
+  width: 100%;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: -4.5px;
+    border: 5px solid transparent;
+  }
+
+  &::before {
+    left: 0;
+    border-left-color: var(--border);
+  }
+  &::after {
+    right: 0;
+    border-right-color: var(--border);
+  }
+}
+=== src/hooks/useOpenOrders.ts
+import { useCallback, useEffect, useState } from "react";
+import { ordersService } from "@/services/ordersService";
+import type { Order } from "@/types/order";
+
+export function useOpenOrders() {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    const data = await ordersService.getOpen();
+    setOrders(data);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  async function createOrder(customerName: string) {
+    const order = await ordersService.create(customerName);
+    await load();
+    return order;
+  }
+
+  async function deleteOrder(orderId: string) {
+    await ordersService.delete(orderId);
+    await load();
+  }
+
+  return { orders, loading, reload: load, createOrder, deleteOrder };
+}
+=== src/pages/orders/OrdersPage.tsx
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useOpenOrders } from "@/hooks/useOpenOrders";
+import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
+import { Input } from "@/components/ui/Input";
+
+export function OrdersPage() {
+  const { orders, loading, createOrder, deleteOrder } = useOpenOrders();
+  const [creating, setCreating] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  async function handleCreate() {
+    const order = await createOrder(customerName);
+    setCreating(false);
+    setCustomerName("");
+    navigate(`/pedidos/${order.id}`);
+  }
+
+  async function handleDelete(orderId: string) {
+    if (!window.confirm("¿Querés borrar esta hoja de pedido? Esta acción no registra movimientos ni modifica el stock.")) {
+      return;
+    }
+
+    setDeletingId(orderId);
+    setDeleteError(null);
+    try {
+      await deleteOrder(orderId);
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Error al borrar la hoja de pedido");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  return (
+    <div>
+      <Button onClick={() => setCreating(true)}>+ Nueva hoja de pedido</Button>
+
+      {loading && <p>Cargando...</p>}
+
+      {deleteError && (
+        <p style={{ color: "var(--color-danger)" }}>❌ {deleteError}</p>
+      )}
+
+      {!loading && orders.length === 0 && (
+        <p style={{ color: "var(--color-text-muted)" }}>
+          No hay hojas de pedido abiertas. Creá una con el botón de arriba.
+        </p>
+      )}
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
+        {orders.map((order) => (
+          <div
+            key={order.id}
+            onClick={() => navigate(`/pedidos/${order.id}`)}
+            style={{
+              backgroundColor: "var(--color-surface)",
+              border: "1px solid var(--color-border)",
+              borderRadius: "var(--radius-md)",
+              padding: "1rem",
+              cursor: "pointer",
+            }}
+          >
+            <strong>{order.customer_name || "Sin nombre"}</strong>
+            <div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>
+              {new Date(order.created_at).toLocaleString("es-AR")}
+            </div>
+            <Button
+              variant="danger"
+              disabled={deletingId === order.id}
+              onClick={(event) => {
+                event.stopPropagation();
+                void handleDelete(order.id);
+              }}
+              style={{ width: "100%", marginTop: "0.75rem" }}
+            >
+              {deletingId === order.id ? "Borrando..." : "Borrar hoja"}
+            </Button>
+          </div>
+        ))}
+      </div>
+
+      {creating && (
+        <Modal title="Nueva hoja de pedido" onClose={() => setCreating(false)}>
+          <Input
+            label="Cliente (opcional)"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            placeholder="Ej: Pablo Peroni"
+          />
+          <Button onClick={handleCreate} style={{ width: "100%" }}>
+            Crear hoja
+          </Button>
+        </Modal>
+      )}
+    </div>
+  );
+}
+=== src/types/order.ts
+import type { Database } from "@/types/database";
+import type { ProductWithRelations } from "@/types/product";
+import type { Unit } from "@/types/product";
+
+export type Order = Database["public"]["Tables"]["orders"]["Row"];
+export type OrderInsert = Database["public"]["Tables"]["orders"]["Insert"];
+
+export type OrderItem = Database["public"]["Tables"]["order_items"]["Row"];
+export type OrderItemInsert = Database["public"]["Tables"]["order_items"]["Insert"];
+export type OrderItemUpdate = Database["public"]["Tables"]["order_items"]["Update"];
+
+export interface OrderItemWithDetails extends OrderItem {
+  product: ProductWithRelations | null;
+  unit: Unit | null;
+}
+=== src/services/ordersService.ts
+import { supabase } from "@/lib/supabase";
+import type { Order, OrderItem, OrderItemInsert, OrderItemUpdate } from "@/types/order";
+
+export const ordersService = {
+  async getOpen(): Promise<Order[]> {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("status", "open")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  async getById(id: string): Promise<Order | null> {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async create(customerName: string): Promise<Order> {
+    const { data, error } = await supabase
+      .from("orders")
+      .insert({ customer_name: customerName || null })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async delete(id: string): Promise<void> {
+    const { error } = await supabase.from("orders").delete().eq("id", id);
+    if (error) throw error;
+  },
+
+  async closeOrder(orderId: string): Promise<Order> {
+    const { data, error } = await supabase.rpc("close_order", {
+      p_order_id: orderId,
+    });
+
+    if (error) throw error;
+    return data as Order;
+  },
+
+  async cancelOrder(orderId: string): Promise<Order> {
+    const { data, error } = await supabase.rpc("cancel_order", {
+      p_order_id: orderId,
+    });
+
+    if (error) throw error;
+    return data as Order;
+  },
+
+  async updatePriceMode(orderId: string, priceMode: "customer" | "business"): Promise<Order> {
+    const { data, error } = await supabase
+      .from("orders")
+      .update({ price_mode: priceMode })
+      .eq("id", orderId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async updateOwes(orderId: string, owes: boolean): Promise<Order> {
+    const { data, error } = await supabase
+      .from("orders")
+      .update({ owes })
+      .eq("id", orderId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async getOwed(): Promise<Order[]> {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("status", "completed")
+      .eq("owes", true)
+      .order("completed_at", { ascending: false });
+
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  async getAllCompleted(): Promise<Order[]> {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("status", "completed")
+      .order("completed_at", { ascending: false });
+
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  async getCompletedToday(): Promise<Order[]> {
+    const from = new Date();
+    from.setHours(0, 0, 0, 0);
+
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("status", "completed")
+      .gte("completed_at", from.toISOString())
+      .order("completed_at", { ascending: false });
+
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  async getItemsSummary(orderId: string): Promise<string[]> {
+    const { data, error } = await supabase
+      .from("order_items")
+      .select("quantity, product:products(name), unit:units(abbreviation)")
+      .eq("order_id", orderId);
+
+    if (error) throw error;
+
+    return (data ?? []).map((row) => {
+      const r = row as unknown as {
+        quantity: number;
+        product: { name: string } | null;
+        unit: { abbreviation: string } | null;
+      };
+      return `${r.quantity} ${r.unit?.abbreviation ?? ""} ${r.product?.name ?? "Producto"}`.trim();
+    });
+  },
+
+  async getItems(orderId: string): Promise<OrderItem[]> {
+    const { data, error } = await supabase
+      .from("order_items")
+      .select("*")
+      .eq("order_id", orderId)
+      .order("created_at", { ascending: true });
+
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  async addItem(item: OrderItemInsert): Promise<OrderItem> {
+    const { data, error } = await supabase
+      .from("order_items")
+      .insert(item)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async updateItem(id: string, changes: OrderItemUpdate): Promise<OrderItem> {
+    const { data, error } = await supabase
+      .from("order_items")
+      .update(changes)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async removeItem(id: string): Promise<void> {
+    const { error } = await supabase.from("order_items").delete().eq("id", id);
+    if (error) throw error;
+  },
+};

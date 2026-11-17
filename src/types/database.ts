@@ -1,6 +1,75 @@
 export type Database = {
   public: {
     Tables: {
+      expenses: {
+        Row: {
+          id: string; tenant_id: string; description: string; amount: number;
+          payment_method: string; expense_date: string;
+          created_by: string | null; created_at: string;
+        };
+        Insert: {
+          id?: string; description: string; amount: number;
+          payment_method: string; expense_date: string;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      cash_registers: {
+        Row: { id: string; tenant_id: string; created_by: string | null; created_at: string };
+        Insert: Record<string, never>;
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      cash_register_periods: {
+        Row: {
+          id: string; tenant_id: string; cash_register_id: string;
+          opened_at: string; opened_by: string;
+          closed_at: string | null; closed_by: string | null;
+        };
+        Insert: Record<string, never>;
+        Update: Record<string, never>;
+        Relationships: [];
+      };
+      organizations: {
+        Row: {
+          id: string;
+          name: string;
+          enabled_modules: string[];
+          theme: Record<string, unknown> | null;
+          payment_method: string | null;
+          cash_register_id: string | null;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          enabled_modules?: string[];
+          theme?: Record<string, unknown> | null;
+        };
+        Update: {
+          name?: string;
+          enabled_modules?: string[];
+          theme?: Record<string, unknown> | null;
+        };
+        Relationships: [];
+      };
+      organization_memberships: {
+        Row: {
+          organization_id: string;
+          user_id: string;
+          role: "admin" | "member";
+          created_at: string;
+        };
+        Insert: {
+          organization_id: string;
+          user_id: string;
+          role?: "admin" | "member";
+          created_at?: string;
+        };
+        Update: {
+          role?: "admin" | "member";
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           id: string;
@@ -141,6 +210,8 @@ export type Database = {
           total: number | null;
           created_at: string;
           completed_at: string | null;
+          payment_method: string | null;
+          cash_register_id: string | null;
         };
         Insert: {
           id?: string;
@@ -148,6 +219,8 @@ export type Database = {
           status?: "open" | "completed" | "cancelled";
           price_mode?: "customer" | "business";
           owes?: boolean;
+          payment_method?: string | null;
+          cash_register_id?: string | null;
         };
         Update: {
           customer_name?: string | null;
@@ -156,6 +229,8 @@ export type Database = {
           owes?: boolean;
           total?: number | null;
           completed_at?: string | null;
+          payment_method?: string | null;
+          cash_register_id?: string | null;
         };
         Relationships: [];
       };
@@ -223,6 +298,14 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      bakery_period_totals: {
+        Args: { p_from: string; p_to: string; p_timezone: string };
+        Returns: { day: string; income: number; expenses: number }[];
+      };
+      update_sale: {
+        Args: { p_order_id: string; p_description: string; p_amount: number; p_payment_method: string };
+        Returns: Record<string, unknown>;
+      };
       close_order: {
         Args: { p_order_id: string };
         Returns: {
@@ -235,7 +318,16 @@ export type Database = {
           total: number | null;
           created_at: string;
           completed_at: string | null;
+          payment_method: string | null;
+          cash_register_id: string | null;
         };
+      };
+            open_cash_register: { Args: Record<PropertyKey, never>; Returns: string };
+      close_cash_register: { Args: Record<PropertyKey, never>; Returns: string };
+      reopen_cash_register: { Args: { p_register_id: string }; Returns: string };
+      register_sale: {
+        Args: { p_description: string; p_amount: number; p_payment_method: string };
+        Returns: Record<string, unknown>;
       };
       cancel_order: {
         Args: { p_order_id: string };
@@ -249,6 +341,8 @@ export type Database = {
           total: number | null;
           created_at: string;
           completed_at: string | null;
+          payment_method: string | null;
+          cash_register_id: string | null;
         };
       };
     };
@@ -256,3 +350,4 @@ export type Database = {
     CompositeTypes: Record<string, never>;
   };
 };
+

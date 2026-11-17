@@ -4,10 +4,22 @@ interface MetricCardProps {
   label: string;
   value: number;
   changePercent: number | null;
+  // Opcionales: sin ellos la tarjeta se comporta exactamente igual que antes.
+  accentColor?: string; // color del importe
+  higherIsBetter?: boolean; // false para egresos: subir es "malo"
+  formatValue?: (value: number) => string;
 }
 
-export function MetricCard({ label, value, changePercent }: MetricCardProps) {
+export function MetricCard({
+  label,
+  value,
+  changePercent,
+  accentColor,
+  higherIsBetter = true,
+  formatValue = formatCurrency,
+}: MetricCardProps) {
   const isPositive = (changePercent ?? 0) >= 0;
+  const isGood = higherIsBetter ? isPositive : !isPositive;
 
   return (
     <div
@@ -19,14 +31,21 @@ export function MetricCard({ label, value, changePercent }: MetricCardProps) {
       }}
     >
       <div style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>{label}</div>
-      <div style={{ fontSize: "1.8rem", fontWeight: 700, margin: "0.3rem 0" }}>
-        {formatCurrency(value)}
+      <div
+        style={{
+          fontSize: "1.8rem",
+          fontWeight: 700,
+          margin: "0.3rem 0",
+          color: accentColor,
+        }}
+      >
+        {formatValue(value)}
       </div>
       {changePercent !== null && (
         <div
           style={{
             fontSize: "0.85rem",
-            color: isPositive ? "var(--color-success)" : "var(--color-danger)",
+            color: isGood ? "var(--color-success)" : "var(--color-danger)",
             fontWeight: 600,
           }}
         >

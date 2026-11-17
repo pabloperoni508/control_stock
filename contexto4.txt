@@ -1,0 +1,501 @@
+﻿=== src/pages/analytics/AnalyticsPage.tsx
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { analyticsService } from "@/services/analyticsService";
+import { useProducts } from "@/hooks/useProducts";
+import { useBusinessSettings } from "@/hooks/useBusinessSettings";
+import { movementsService } from "@/services/movementsService";
+import { getPeriodRange, summarizeSales, buildProductRanking } from "@/utils/analytics";
+import { MetricCard } from "@/components/analytics/MetricCard";
+import { SimpleBarChart } from "@/components/analytics/SimpleBarChart";
+import { TopProductsList } from "@/components/analytics/TopProductsList";
+import { StockAlerts } from "@/components/analytics/StockAlerts";
+import { Button } from "@/components/ui/Button";
+import type { PeriodOption, SaleRecord } from "@/types/analytics";
+import { TodaySummary } from "@/components/analytics/TodaySummary";
+
+const periodLabels: Record<PeriodOption, string> = {
+  week: "Semana",
+  month: "Mes",
+  year: "Año",
+};
+
+export function AnalyticsPage() {
+  const navigate = useNavigate();
+  const { products } = useProducts();
+  const { settings } = useBusinessSettings();
+
+  const [period, setPeriod] = useState<PeriodOption>("week");
+  const [currentSales, setCurrentSales] = useState<SaleRecord[]>([]);
+  const [previousSales, setPreviousSales] = useState<SaleRecord[]>([]);
+  const [lastMovementByProduct, setLastMovementByProduct] = useState<Map<string, string>>(
+    new Map()
+  );
+  const [loading, setLoading] = useState(true);
+
+  const { from: currentFrom, to: currentTo } = getPeriodRange(period, 0);
+  const { from: prevFrom, to: prevTo } = getPeriodRange(period, -1);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      analyticsService.getSalesBetween(currentFrom, currentTo),
+      analyticsService.getSalesBetween(prevFrom, prevTo),
+    ]).then(([current, previous]) => {
+      setCurrentSales(current);
+      setPreviousSales(previous);
+      setLoading(false);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period]);
+
+  useEffect(() => {
+    async function loadLastMovements() {
+      const map = new Map<string, string>();
+      await Promise.all(
+        products.map(async (p) => {
+          const movements = await movementsService.getByProduct(p.id);
+          if (movements.length > 0) {
+            map.set(p.id, movements[0].created_at);
+          }
+        })
+      );
+      setLastMovementByProduct(map);
+    }
+
+    if (products.length > 0) loadLastMovements();
+  }, [products]);
+
+  const summary = useMemo(
+    () => summarizeSales(currentSales, previousSales, period, currentFrom),
+    [currentSales, previousSales, period, currentFrom]
+  );
+
+  const ranking = useMemo(() => buildProductRanking(currentSales), [currentSales]);
+
+  const lowRotationDays = settings?.low_rotation_days ?? 20;
+
+  return (
+    <div>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "1.5rem",
+          flexWrap: "wrap",
+          gap: "1rem",
+        }}
+      >
+        <h1 style={{ margin: 0 }}>📊 Analíticas</h1>
+        <Button onClick={() => navigate("/pedidos")}>🛒 Vender</Button>
+      </div>
+
+      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
+        {(["week", "month", "year"] as PeriodOption[]).map((p) => (
+          <button
+            key={p}
+            onClick={() => setPeriod(p)}
+            style={{
+              padding: "0.4rem 0.9rem",
+              borderRadius: "var(--radius-sm)",
+              border: "1px solid var(--color-border)",
+              backgroundColor: period === p ? "var(--color-primary)" : "var(--color-surface)",
+              color: period === p ? "#fff" : "var(--color-text)",
+              cursor: "pointer",
+              fontSize: "0.85rem",
+            }}
+          >
+            {periodLabels[p]}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <p>Cargando analíticas...</p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+          <MetricCard
+            label={`Ventas esta ${periodLabels[period].toLowerCase()}`}
+            value={summary.total}
+            changePercent={summary.changePercent}
+          />
+
+          <SimpleBarChart data={summary.dailyTotals} showValues={period === "week"} />
+
+          <div>
+            <h2 style={{ fontSize: "1.1rem", marginBottom: "0.75rem" }}>🏆 Top productos</h2>
+            <TopProductsList ranking={ranking} />
+          </div>
+
+          <div>
+            <h2 style={{ fontSize: "1.1rem", marginBottom: "0.75rem" }}>📅 Resumen del día</h2>
+            <TodaySummary />
+          </div>
+
+          <div>
+            <h2 style={{ fontSize: "1.1rem", marginBottom: "0.75rem" }}>Alertas</h2>
+            <StockAlerts
+              products={products}
+              lowRotationDays={lowRotationDays}
+              lastMovementByProduct={lastMovementByProduct}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+=== src/components/analytics/MetricCard.tsx
+import { formatCurrency } from "@/utils/format";
+
+interface MetricCardProps {
+  label: string;
+  value: number;
+  changePercent: number | null;
+}
+
+export function MetricCard({ label, value, changePercent }: MetricCardProps) {
+  const isPositive = (changePercent ?? 0) >= 0;
+
+  return (
+    <div
+      style={{
+        backgroundColor: "var(--color-surface)",
+        border: "1px solid var(--color-border)",
+        borderRadius: "var(--radius-md)",
+        padding: "1.25rem",
+      }}
+    >
+      <div style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>{label}</div>
+      <div style={{ fontSize: "1.8rem", fontWeight: 700, margin: "0.3rem 0" }}>
+        {formatCurrency(value)}
+      </div>
+      {changePercent !== null && (
+        <div
+          style={{
+            fontSize: "0.85rem",
+            color: isPositive ? "var(--color-success)" : "var(--color-danger)",
+            fontWeight: 600,
+          }}
+        >
+          {isPositive ? "↑" : "↓"} {Math.abs(changePercent).toFixed(1)}%
+          <span style={{ color: "var(--color-text-muted)", fontWeight: 400 }}>
+            {" "}
+            vs período anterior
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+=== src/components/analytics/SimpleBarChart.tsx
+import { formatCurrency } from "@/utils/format";
+
+interface SimpleBarChartProps {
+  data: { label: string; total: number }[];
+  showValues?: boolean;
+}
+
+export function SimpleBarChart({ data, showValues = false }: SimpleBarChartProps) {
+  const max = Math.max(...data.map((d) => d.total), 1);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-end",
+        gap: "4px",
+        minHeight: "140px",
+        padding: "1rem",
+        backgroundColor: "var(--color-surface)",
+        border: "1px solid var(--color-border)",
+        borderRadius: "var(--radius-md)",
+        overflowX: "auto",
+      }}
+    >
+      {data.map((d, i) => (
+        <div
+          key={i}
+          title={`${d.label}: ${formatCurrency(d.total)}`}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-end",
+            height: "140px",
+            minWidth: data.length > 15 ? "8px" : "20px",
+            flex: 1,
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              height: `${(d.total / max) * 100}%`,
+              backgroundColor: "var(--color-primary)",
+              borderRadius: "3px 3px 0 0",
+              minHeight: d.total > 0 ? "3px" : "0",
+            }}
+          />
+          {data.length <= 12 && (
+            <div style={{ fontSize: "0.65rem", color: "var(--color-text-muted)", marginTop: "4px" }}>
+              {d.label}
+            </div>
+          )}
+          {showValues && (
+            <div
+              style={{
+                fontSize: "0.65rem",
+                color: "var(--color-text)",
+                fontWeight: 600,
+                marginTop: "2px",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {d.total > 0 ? formatCurrency(d.total) : "-"}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+=== src/components/analytics/TodaySummary.tsx
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ordersService } from "@/services/ordersService";
+import { formatCurrency } from "@/utils/format";
+import type { Order } from "@/types/order";
+
+interface OrderWithItems extends Order {
+  itemsLabel: string;
+}
+
+export function TodaySummary() {
+  const navigate = useNavigate();
+  const [orders, setOrders] = useState<OrderWithItems[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      const todays = await ordersService.getCompletedToday();
+      const withItems = await Promise.all(
+        todays.map(async (o) => {
+          const items = await ordersService.getItemsSummary(o.id);
+          return { ...o, itemsLabel: items.join(", ") || "Sin productos" };
+        })
+      );
+      setOrders(withItems);
+      setLoading(false);
+    }
+    load();
+  }, []);
+
+  if (loading) return <p style={{ fontSize: "0.85rem" }}>Cargando...</p>;
+
+  if (orders.length === 0) {
+    return (
+      <p style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
+        Todavía no se cerró ningún pedido hoy.
+      </p>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
+      {orders.map((o) => (
+        <div
+          key={o.id}
+          onClick={() => navigate(`/pedidos/${o.id}`)}
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: "1rem",
+            padding: "0.75rem 1rem",
+            backgroundColor: "var(--color-surface)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "var(--radius-md)",
+            cursor: "pointer",
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <strong style={{ fontSize: "0.9rem" }}>{o.customer_name || "Sin nombre"}</strong>
+            <div
+              style={{
+                fontSize: "0.8rem",
+                color: "var(--color-text-muted)",
+                marginTop: "0.2rem",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {o.itemsLabel}
+            </div>
+          </div>
+          <div style={{ fontWeight: 700, whiteSpace: "nowrap" }}>
+            {o.total !== null ? formatCurrency(o.total) : "-"}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+=== src/services/analyticsService.ts
+import { supabase } from "@/lib/supabase";
+import type { SaleRecord } from "@/types/analytics";
+
+export const analyticsService = {
+  async getSalesBetween(from: Date, to: Date): Promise<SaleRecord[]> {
+    const { data, error } = await supabase
+      .from("sales_view")
+      .select("*")
+      .gte("created_at", from.toISOString())
+      .lt("created_at", to.toISOString())
+      .order("created_at", { ascending: true });
+
+    if (error) throw error;
+    return (data ?? []) as SaleRecord[];
+  },
+};
+=== src/types/analytics.ts
+export type PeriodOption = "week" | "month" | "year";
+
+export interface SaleRecord {
+  movement_id: string;
+  product_id: string;
+  product_name: string;
+  price: number;
+  category_id: string | null;
+  quantity: number;
+  created_at: string;
+  user_id: string | null;
+}
+
+export interface PeriodSummary {
+  total: number;
+  previousTotal: number;
+  changePercent: number | null;
+  dailyTotals: { label: string; total: number }[];
+}
+
+export interface ProductRankingItem {
+  productId: string;
+  productName: string;
+  totalQuantity: number;
+  totalRevenue: number;
+}
+=== src/utils/analytics.ts
+import type { SaleRecord, PeriodOption, PeriodSummary, ProductRankingItem } from "@/types/analytics";
+
+export function getPeriodRange(period: PeriodOption, offset: number) {
+  const now = new Date();
+  let from: Date;
+  let to: Date;
+
+  if (period === "week") {
+    const day = now.getDay();
+    const mondayOffset = day === 0 ? -6 : 1 - day;
+    from = new Date(now);
+    from.setDate(now.getDate() + mondayOffset + offset * 7);
+    from.setHours(0, 0, 0, 0);
+    to = new Date(from);
+    to.setDate(from.getDate() + 7);
+  } else if (period === "month") {
+    from = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+    to = new Date(now.getFullYear(), now.getMonth() + offset + 1, 1);
+  } else {
+    from = new Date(now.getFullYear() + offset, 0, 1);
+    to = new Date(now.getFullYear() + offset + 1, 0, 1);
+  }
+
+  return { from, to };
+}
+
+export function summarizeSales(
+  current: SaleRecord[],
+  previous: SaleRecord[],
+  period: PeriodOption,
+  from: Date
+): PeriodSummary {
+  const total = current.reduce((sum, s) => sum + s.price * s.quantity, 0);
+  const previousTotal = previous.reduce((sum, s) => sum + s.price * s.quantity, 0);
+
+  const changePercent =
+    previousTotal > 0 ? ((total - previousTotal) / previousTotal) * 100 : null;
+
+  const dailyTotals = buildDailyTotals(current, period, from);
+
+  return { total, previousTotal, changePercent, dailyTotals };
+}
+
+function buildDailyTotals(
+  sales: SaleRecord[],
+  period: PeriodOption,
+  from: Date
+): { label: string; total: number }[] {
+  if (period === "week") {
+    const labels = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+    const totals = new Array(7).fill(0);
+    for (const s of sales) {
+      const diffDays = Math.floor(
+        (new Date(s.created_at).getTime() - from.getTime()) / 86400000
+      );
+      if (diffDays >= 0 && diffDays < 7) totals[diffDays] += s.price * s.quantity;
+    }
+    return labels.map((label, i) => ({ label, total: totals[i] }));
+  }
+
+  if (period === "month") {
+    // Siempre exactamente 4 barras ("Semana 1" a "Semana 4"), sin importar
+    // cuántos días tenga el mes: días 1-7, 8-14, 15-21, y 22-fin.
+    const daysInMonth = new Date(from.getFullYear(), from.getMonth() + 1, 0).getDate();
+    const totals = [0, 0, 0, 0];
+
+    for (const s of sales) {
+      const day = new Date(s.created_at).getDate();
+      let weekIndex: number;
+      if (day <= 7) weekIndex = 0;
+      else if (day <= 14) weekIndex = 1;
+      else if (day <= 21) weekIndex = 2;
+      else weekIndex = 3;
+      totals[weekIndex] += s.price * s.quantity;
+    }
+
+    void daysInMonth;
+    return ["Semana 1", "Semana 2", "Semana 3", "Semana 4"].map((label, i) => ({
+      label,
+      total: totals[i],
+    }));
+  }
+
+  const labels = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+  const totals = new Array(12).fill(0);
+  for (const s of sales) {
+    const m = new Date(s.created_at).getMonth();
+    totals[m] += s.price * s.quantity;
+  }
+  return labels.map((label, i) => ({ label, total: totals[i] }));
+}
+
+export function buildProductRanking(sales: SaleRecord[]): ProductRankingItem[] {
+  const map = new Map<string, ProductRankingItem>();
+
+  for (const s of sales) {
+    const existing = map.get(s.product_id);
+    if (existing) {
+      existing.totalQuantity += s.quantity;
+      existing.totalRevenue += s.price * s.quantity;
+    } else {
+      map.set(s.product_id, {
+        productId: s.product_id,
+        productName: s.product_name,
+        totalQuantity: s.quantity,
+        totalRevenue: s.price * s.quantity,
+      });
+    }
+  }
+
+  return Array.from(map.values()).sort((a, b) => b.totalRevenue - a.totalRevenue);
+}

@@ -1,0 +1,119 @@
+﻿=== package.json
+{
+  "name": "control_stock",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.116.0",
+    "jspdf": "^4.2.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^7.18.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.6.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "eslint": "^10.10.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.12.0",
+    "typescript": "^5.5.3",
+    "typescript-eslint": "^8.70.0",
+    "vite": "^5.4.1",
+    "vite-plugin-pwa": "^1.3.0"
+  }
+}
+=== archivos src
+src/App.css
+src/App.tsx
+src/assets/logo.png
+src/components/analytics/MetricCard.tsx
+src/components/analytics/SimpleBarChart.tsx
+src/components/analytics/StockAlerts.tsx
+src/components/analytics/TodaySummary.tsx
+src/components/analytics/TopProductsList.tsx
+src/components/business/UnitsManager.tsx
+src/components/orders/AddOrderItemForm.tsx
+src/components/orders/OpenOrdersWidget.tsx
+src/components/orders/OrderItemRow.tsx
+src/components/orders/OwedOrdersWidget.tsx
+src/components/products/ProductCard.tsx
+src/components/products/ProductDetailModal.tsx
+src/components/products/ProductForm.tsx
+src/components/products/ProductSearchBar.tsx
+src/components/products/StockMovementForm.tsx
+src/components/products/StockMovementHistory.tsx
+src/components/ui/Accordion.tsx
+src/components/ui/Badge.tsx
+src/components/ui/Button.tsx
+src/components/ui/Input.tsx
+src/components/ui/Modal.tsx
+src/contexts/AuthContext.tsx
+src/contexts/AuthContextValue.ts
+src/hooks/useAuth.ts
+src/hooks/useBusinessSettings.ts
+src/hooks/useOpenOrders.ts
+src/hooks/useOrder.ts
+src/hooks/useProducts.ts
+src/index.css
+src/layouts/AppLayout.tsx
+src/lib/supabase.ts
+src/main.tsx
+src/pages/analytics/AnalyticsPage.tsx
+src/pages/auth/LoginPage.tsx
+src/pages/business/BusinessPage.tsx
+src/pages/dashboard/DashboardPage.tsx
+src/pages/orders/OrderCreditNotesPage.tsx
+src/pages/orders/OrderDetailPage.tsx
+src/pages/orders/OrderHistoryPage.tsx
+src/pages/orders/OrdersPage.tsx
+src/pages/products/ProductsPage.tsx
+src/pages/settings/SettingsPage.tsx
+src/routes/ProtectedRoute.tsx
+src/services/analyticsService.ts
+src/services/authService.ts
+src/services/categoriesService.ts
+src/services/creditNotesService.ts
+src/services/movementsService.ts
+src/services/ordersService.ts
+src/services/productsService.ts
+src/services/profilesService.ts
+src/services/settingsService.ts
+src/services/unitsService.ts
+src/types/analytics.ts
+src/types/creditNote.ts
+src/types/database.ts
+src/types/movement.ts
+src/types/order.ts
+src/types/product.ts
+src/types/profile.ts
+src/types/settings.ts
+src/utils/analytics.ts
+src/utils/format.ts
+src/utils/pricing.ts
+src/utils/stock.ts
+src/utils/ticket.ts
+src/vite-env.d.ts
+=== config de estilos
+App.css
+index.css
+=== archivos clave
+C:\Users\Pablo\OneDrive\Desktop\VS_code\control_stock\src\App.tsx
+C:\Users\Pablo\OneDrive\Desktop\VS_code\control_stock\src\contexts\AuthContext.tsx
+C:\Users\Pablo\OneDrive\Desktop\VS_code\control_stock\src\contexts\AuthContextValue.ts
+C:\Users\Pablo\OneDrive\Desktop\VS_code\control_stock\src\hooks\useAuth.ts
+C:\Users\Pablo\OneDrive\Desktop\VS_code\control_stock\src\index.css
+C:\Users\Pablo\OneDrive\Desktop\VS_code\control_stock\src\layouts\AppLayout.tsx
+C:\Users\Pablo\OneDrive\Desktop\VS_code\control_stock\src\pages\auth\LoginPage.tsx
+C:\Users\Pablo\OneDrive\Desktop\VS_code\control_stock\src\pages\settings\SettingsPage.tsx
+C:\Users\Pablo\OneDrive\Desktop\VS_code\control_stock\src\routes\ProtectedRoute.tsx

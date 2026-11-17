@@ -1,18 +1,16 @@
 import { useState, type ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-
-const navItems = [
-  { to: "/productos", label: "📦 Productos" },
-  { to: "/pedidos/historial", label: "📋 Historial de pedidos" },
-  { to: "/analiticas", label: "📊 Analíticas" },
-  { to: "/negocio", label: "🏪 Gestión del negocio" },
-  { to: "/configuracion", label: "⚙️ Configuración" },
-];
+import { NAV_ITEMS } from "@/config/modules";
 
 export function AppLayout({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, organization } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const navItems = organization ? NAV_ITEMS[organization.kind] : [];
+  const brand =
+    organization?.kind === "bakery"
+      ? `🥖 ${organization.name}`
+      : "🥜 Control Stock";
 
   return (
     <div className="app-shell">
@@ -24,7 +22,7 @@ export function AppLayout({ children }: { children: ReactNode }) {
       )}
 
       <aside className={`app-sidebar ${drawerOpen ? "open" : ""}`}>
-        <div className="app-sidebar-brand">🥜 Control Stock</div>
+        <div className="app-sidebar-brand">{brand}</div>
         <nav style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
           {navItems.map((item) => (
             <NavLink

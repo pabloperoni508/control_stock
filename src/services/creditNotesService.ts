@@ -11,4 +11,15 @@ export const creditNotesService = {
     if (error) throw error;
     return (data ?? []) as CreditNoteRecord[];
   },
+
+  async getSince(from: Date): Promise<CreditNoteRecord[]> {
+    const { data, error } = await supabase
+      .from("credit_notes_view")
+      .select("*")
+      .gte("created_at", from.toISOString())
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return (data ?? []) as CreditNoteRecord[];
+  },
 };
