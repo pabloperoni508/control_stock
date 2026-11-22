@@ -298,6 +298,19 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+            create_org_invitation: {
+        Args: { p_organization_id: string; p_email: string; p_role?: string };
+        Returns: { invitation_id: string; invitation_token: string; expires_at: string }[];
+      };
+      list_org_invitations: {
+        Args: { p_organization_id: string };
+        Returns: {
+          invitation_id: string; email: string; role: string;
+          invited_by: string; expires_at: string; created_at: string;
+        }[];
+      };
+      revoke_org_invitation: { Args: { p_invitation_id: string }; Returns: boolean };
+      accept_org_invitation: { Args: { p_token: string }; Returns: string };
       bakery_period_totals: {
         Args: { p_from: string; p_to: string; p_timezone: string };
         Returns: { day: string; income: number; expenses: number }[];

@@ -59,9 +59,7 @@ export function LoginPage() {
           🥜 Control Stock
         </h1>
 
-        <label
-          style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.9rem" }}
-        >
+        <label style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.9rem" }}>
           Email
         </label>
         <input
@@ -78,9 +76,7 @@ export function LoginPage() {
           }}
         />
 
-        <label
-          style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.9rem" }}
-        >
+        <label style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.9rem" }}>
           Contraseña
         </label>
         <input

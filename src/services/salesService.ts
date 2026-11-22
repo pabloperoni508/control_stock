@@ -2,6 +2,8 @@ import { supabase } from "@/lib/supabase";
 import type { Order } from "@/types/order";
 import type { PaymentMethod } from "@/types/cashRegister";
 
+export const SALES_HISTORY_PAGE_SIZE = 100;
+
 export const salesService = {
   /**
    * Ventas de una caja, de la más reciente a la más antigua.
@@ -14,6 +16,24 @@ export const salesService = {
       .eq("cash_register_id", registerId)
       .eq("status", "completed")
       .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  /**
+   * Historial completo de ventas de la panadería, por páginas
+   * (la API corta en 1000 filas). Solo ventas manuales: las que tienen caja.
+   */
+  async listHistory(offset: number): Promise<Order[]> {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .not("cash_register_id", "is", null)
+      .eq("status", "completed")
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(offset, offset + SALES_HISTORY_PAGE_SIZE - 1);
 
     if (error) throw error;
     return data ?? [];

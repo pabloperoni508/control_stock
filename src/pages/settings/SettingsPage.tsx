@@ -4,9 +4,10 @@ import { authService } from "@/services/authService";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { TeamSection } from "@/components/settings/TeamSection";
 
 export function SettingsPage() {
-  const { user, signOut } = useAuth();
+  const { user, organization, signOut } = useAuth();
 
   const [fullName, setFullName] = useState("");
   const [savingName, setSavingName] = useState(false);
@@ -79,6 +80,9 @@ export function SettingsPage() {
     marginBottom: "1.5rem",
   };
 
+  // Solo administradores de la panadería gestionan el equipo.
+  const canManageTeam = organization?.kind === "bakery" && organization.role === "admin";
+
   return (
     <div>
       <h1>⚙️ Configuración</h1>
@@ -138,6 +142,8 @@ export function SettingsPage() {
           {savingPassword ? "Guardando..." : "Cambiar contraseña"}
         </Button>
       </div>
+
+      {canManageTeam && <TeamSection />}
 
       <div style={cardStyle}>
         <h2 style={{ fontSize: "1rem", marginTop: 0 }}>Sesión</h2>

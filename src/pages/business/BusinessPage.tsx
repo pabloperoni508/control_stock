@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useBusinessSettings } from "@/hooks/useBusinessSettings";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -13,7 +13,7 @@ export function BusinessPage() {
   const [submitting, setSubmitting] = useState(false);
   const [saved, setSaved] = useState(false);
 
-     useEffect(() => {
+  useEffect(() => {
     if (settings) {
       setLowRotationDays(String(settings.low_rotation_days));
       setGlobalMinStockAlert(settings.global_min_stock_alert);
@@ -25,7 +25,7 @@ export function BusinessPage() {
     setSubmitting(true);
     setSaved(false);
     try {
-            await updateSettings({
+      await updateSettings({
         low_rotation_days: Number(lowRotationDays),
         global_min_stock_alert: globalMinStockAlert,
         allow_negative_stock: allowNegativeStock,

@@ -1,6 +1,7 @@
 import { Navigate } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { getPendingInvitation } from "@/lib/pendingInvitation";
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const {
@@ -34,6 +35,12 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   if (!organization) {
+    // Una persona recién registrada que confirmó su email vuelve a la raíz de la
+    // aplicación: si venía con una invitación, se la lleva a aceptarla.
+    if (!organizationError && getPendingInvitation()) {
+      return <Navigate to="/invitacion" replace />;
+    }
+
     return (
       <div style={{ padding: "2rem", textAlign: "center" }}>
         <p>

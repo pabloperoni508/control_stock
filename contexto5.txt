@@ -1,0 +1,531 @@
+﻿=== src/components/ui/Accordion.tsx
+import { useState, type ReactNode } from "react";
+
+interface AccordionProps {
+  title: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+}
+
+export function Accordion({ title, defaultOpen = false, children }: AccordionProps) {
+  const [open, setOpen] = useState(defaultOpen);
+
+  return (
+    <div
+      style={{
+        border: "1px solid var(--color-border)",
+        borderRadius: "var(--radius-md)",
+        overflow: "hidden",
+        marginBottom: "0.75rem",
+      }}
+    >
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          width: "100%",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "0.75rem 1rem",
+          background: "var(--color-surface)",
+          border: "none",
+          cursor: "pointer",
+          fontSize: "0.9rem",
+          fontWeight: 600,
+          textAlign: "left",
+          color: "var(--color-text)",
+        }}
+      >
+        <span>{title}</span>
+        <span
+          style={{
+            transform: open ? "rotate(180deg)" : "rotate(0deg)",
+            transition: "transform 0.15s",
+          }}
+        >
+          ▾
+        </span>
+      </button>
+      {open && (
+        <div style={{ padding: "0.75rem 1rem", borderTop: "1px solid var(--color-border)" }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+=== src/pages/orders/OrderHistoryPage.tsx
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ordersService } from "@/services/ordersService";
+import { creditNotesService } from "@/services/creditNotesService";
+import { Accordion } from "@/components/ui/Accordion";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { formatCurrency } from "@/utils/format";
+
+interface HistoryEntry {
+  orderId: string;
+  type: "completed" | "cancelled";
+  customerName: string | null;
+  total: number | null;
+  date: string;
+}
+
+function getWeekStart(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay();
+  const mondayOffset = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + mondayOffset);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function formatWeekLabel(weekStart: Date): string {
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+  const fmt = (d: Date) => d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  return `Semana del ${fmt(weekStart)} al ${fmt(weekEnd)}`;
+}
+
+export function OrderHistoryPage() {
+  const navigate = useNavigate();
+  const [entries, setEntries] = useState<HistoryEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.all([ordersService.getAllCompleted(), creditNotesService.getAll()]).then(
+      ([completed, cancelled]) => {
+        const completedEntries: HistoryEntry[] = completed.map((o) => ({
+          orderId: o.id,
+          type: "completed",
+          customerName: o.customer_name,
+          total: o.total,
+          date: o.completed_at ?? o.created_at,
+        }));
+
+        const cancelledEntries: HistoryEntry[] = cancelled.map((cn) => ({
+          orderId: cn.order_id,
+          type: "cancelled",
+          customerName: cn.customer_name,
+          total: cn.total,
+          date: cn.created_at,
+        }));
+
+        const all = [...completedEntries, ...cancelledEntries].sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+
+        setEntries(all);
+        setLoading(false);
+      }
+    );
+  }, []);
+
+  const groups = new Map<number, { label: string; items: HistoryEntry[] }>();
+  for (const entry of entries) {
+    const weekStart = getWeekStart(new Date(entry.date));
+    const key = weekStart.getTime();
+    if (!groups.has(key)) {
+      groups.set(key, { label: formatWeekLabel(weekStart), items: [] });
+    }
+    groups.get(key)!.items.push(entry);
+  }
+
+  const sortedWeekKeys = Array.from(groups.keys()).sort((a, b) => b - a);
+
+  return (
+    <div>
+      <Button variant="ghost" onClick={() => navigate("/pedidos")}>
+        ← Volver a hojas de pedido
+      </Button>
+
+      <h1>📋 Historial de pedidos</h1>
+      <p style={{ color: "var(--color-text-muted)", marginBottom: "1.5rem" }}>
+        Todos los pedidos cerrados y cancelados, agrupados por semana.
+      </p>
+
+      {loading && <p>Cargando historial...</p>}
+
+      {!loading && sortedWeekKeys.length === 0 && (
+        <p style={{ color: "var(--color-text-muted)" }}>
+          Todavía no hay pedidos cerrados ni cancelados.
+        </p>
+      )}
+
+      {sortedWeekKeys.map((key, index) => {
+        const group = groups.get(key)!;
+        return (
+          <Accordion key={key} title={`${group.label} (${group.items.length})`} defaultOpen={index === 0}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              {group.items.map((entry) => (
+                <div
+                  key={`${entry.orderId}-${entry.type}-${entry.date}`}
+                  onClick={() => navigate(`/pedidos/${entry.orderId}`)}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    backgroundColor: "var(--color-surface)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: "var(--radius-sm)",
+                    padding: "0.6rem 0.8rem",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <strong style={{ fontSize: "0.9rem" }}>
+                        {entry.customerName || "Sin nombre"}
+                      </strong>
+                      <Badge variant={entry.type === "completed" ? "success" : "danger"}>
+                        {entry.type === "completed" ? "Cerrado" : "Cancelado"}
+                      </Badge>
+                    </div>
+                    <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>
+                      {new Date(entry.date).toLocaleString("es-AR")}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      color: entry.type === "cancelled" ? "var(--color-danger)" : undefined,
+                    }}
+                  >
+                    {entry.total !== null
+                      ? `${entry.type === "cancelled" ? "-" : ""}${formatCurrency(entry.total)}`
+                      : "-"}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Accordion>
+        );
+      })}
+    </div>
+  );
+}
+=== src/pages/business/BusinessPage.tsx
+import { useState, useEffect } from "react";
+import { useBusinessSettings } from "@/hooks/useBusinessSettings";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { UnitsManager } from "@/components/business/UnitsManager";
+
+export function BusinessPage() {
+  const { settings, loading, error, updateSettings } = useBusinessSettings();
+
+  const [lowRotationDays, setLowRotationDays] = useState("20");
+  const [globalMinStockAlert, setGlobalMinStockAlert] = useState(true);
+  const [allowNegativeStock, setAllowNegativeStock] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+     useEffect(() => {
+    if (settings) {
+      setLowRotationDays(String(settings.low_rotation_days));
+      setGlobalMinStockAlert(settings.global_min_stock_alert);
+      setAllowNegativeStock(settings.allow_negative_stock);
+    }
+  }, [settings]);
+
+  async function handleSave() {
+    setSubmitting(true);
+    setSaved(false);
+    try {
+            await updateSettings({
+        low_rotation_days: Number(lowRotationDays),
+        global_min_stock_alert: globalMinStockAlert,
+        allow_negative_stock: allowNegativeStock,
+      });
+      setSaved(true);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (loading) return <p>Cargando configuración...</p>;
+  if (error) return <p style={{ color: "var(--color-danger)" }}>❌ {error}</p>;
+
+  return (
+    <div>
+      <h1>🏪 Gestión del negocio</h1>
+      <p style={{ color: "var(--color-text-muted)", marginBottom: "1.5rem" }}>
+        Variables generales que afectan a toda la aplicación.
+      </p>
+
+      <div
+        style={{
+          backgroundColor: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius-md)",
+          padding: "1.5rem",
+          maxWidth: "480px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "0.5rem",
+        }}
+      >
+        <Input
+          label="Días para considerar baja rotación"
+          type="number"
+          min={1}
+          value={lowRotationDays}
+          onChange={(e) => setLowRotationDays(e.target.value)}
+        />
+        <p style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: "-0.7rem" }}>
+          Se usa en Analíticas para marcar productos sin movimiento reciente.
+        </p>
+
+        <label style={{ display: "flex", alignItems: "center", gap: "0.6rem", margin: "0.5rem 0" }}>
+          <input
+            type="checkbox"
+            checked={globalMinStockAlert}
+            onChange={(e) => setGlobalMinStockAlert(e.target.checked)}
+            style={{ width: "18px", height: "18px" }}
+          />
+          Mostrar advertencia de "Queda poco producto" en toda la app
+        </label>
+
+        <label style={{ display: "flex", alignItems: "center", gap: "0.6rem", margin: "0.5rem 0" }}>
+          <input
+            type="checkbox"
+            checked={allowNegativeStock}
+            onChange={(e) => setAllowNegativeStock(e.target.checked)}
+            style={{ width: "18px", height: "18px" }}
+          />
+          Permitir stock negativo (no recomendado)
+        </label>
+        <p style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: "-0.7rem" }}>
+          Esta opción queda guardada, pero aplicarla en el trigger de stock es una mejora futura.
+        </p>
+        {saved && (
+          <p style={{ color: "var(--color-success)", fontSize: "0.85rem" }}>
+            ✅ Configuración guardada.
+          </p>
+        )}
+
+        <Button onClick={handleSave} disabled={submitting} style={{ marginTop: "0.5rem" }}>
+          {submitting ? "Guardando..." : "Guardar cambios"}
+        </Button>
+      </div>
+      <div
+        style={{
+          backgroundColor: "var(--color-surface)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "var(--radius-md)",
+          padding: "1.5rem",
+          maxWidth: "600px",
+        }}
+      >
+        <UnitsManager />
+      </div>
+    </div>
+  );
+}
+=== src/pages/settings/SettingsPage.tsx
+import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { authService } from "@/services/authService";
+import { supabase } from "@/lib/supabase";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+
+export function SettingsPage() {
+  const { user, signOut } = useAuth();
+
+  const [fullName, setFullName] = useState("");
+  const [savingName, setSavingName] = useState(false);
+  const [nameSaved, setNameSaved] = useState(false);
+
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSaved, setPasswordSaved] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.full_name) setFullName(data.full_name);
+      });
+  }, [user]);
+
+  async function handleSaveName() {
+    if (!user) return;
+    setSavingName(true);
+    setNameSaved(false);
+    try {
+      await authService.updateFullName(user.id, fullName.trim());
+      setNameSaved(true);
+    } finally {
+      setSavingName(false);
+    }
+  }
+
+  async function handleChangePassword() {
+    setPasswordError(null);
+    setPasswordSaved(false);
+
+    if (newPassword.length < 6) {
+      setPasswordError("La contraseña debe tener al menos 6 caracteres.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Las contraseñas no coinciden.");
+      return;
+    }
+
+    setSavingPassword(true);
+    try {
+      await authService.updatePassword(newPassword);
+      setPasswordSaved(true);
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (err) {
+      setPasswordError(
+        err instanceof Error ? err.message : "Error al cambiar la contraseña"
+      );
+    } finally {
+      setSavingPassword(false);
+    }
+  }
+
+  const cardStyle = {
+    backgroundColor: "var(--color-surface)",
+    border: "1px solid var(--color-border)",
+    borderRadius: "var(--radius-md)",
+    padding: "1.5rem",
+    maxWidth: "480px",
+    marginBottom: "1.5rem",
+  };
+
+  return (
+    <div>
+      <h1>⚙️ Configuración</h1>
+
+      <div style={cardStyle}>
+        <h2 style={{ fontSize: "1rem", marginTop: 0 }}>Perfil</h2>
+        <p style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
+          Email: {user?.email}
+        </p>
+
+        <Input
+          label="Nombre completo"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          placeholder="Tu nombre"
+        />
+
+        {nameSaved && (
+          <p style={{ color: "var(--color-success)", fontSize: "0.85rem" }}>
+            ✅ Nombre guardado.
+          </p>
+        )}
+
+        <Button onClick={handleSaveName} disabled={savingName}>
+          {savingName ? "Guardando..." : "Guardar nombre"}
+        </Button>
+      </div>
+
+      <div style={cardStyle}>
+        <h2 style={{ fontSize: "1rem", marginTop: 0 }}>Cambiar contraseña</h2>
+
+        <Input
+          label="Nueva contraseña"
+          type="password"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+        />
+        <Input
+          label="Confirmar nueva contraseña"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+        />
+
+        {passwordError && (
+          <p style={{ color: "var(--color-danger)", fontSize: "0.85rem" }}>
+            ❌ {passwordError}
+          </p>
+        )}
+        {passwordSaved && (
+          <p style={{ color: "var(--color-success)", fontSize: "0.85rem" }}>
+            ✅ Contraseña actualizada.
+          </p>
+        )}
+
+        <Button onClick={handleChangePassword} disabled={savingPassword}>
+          {savingPassword ? "Guardando..." : "Cambiar contraseña"}
+        </Button>
+      </div>
+
+      <div style={cardStyle}>
+        <h2 style={{ fontSize: "1rem", marginTop: 0 }}>Sesión</h2>
+        <Button variant="danger" onClick={() => signOut()}>
+          Cerrar sesión
+        </Button>
+      </div>
+    </div>
+  );
+}
+=== src/services/authService.ts
+import { supabase } from "@/lib/supabase";
+
+export const authService = {
+  async signIn(email: string, password: string) {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) throw error;
+    return data;
+  },
+
+  async signOut() {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+  },
+
+  async getSession() {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) throw error;
+    return data.session;
+  },
+
+  async ensureProfile(userId: string, email: string | undefined) {
+    const { data: existing } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (!existing) {
+      await supabase.from("profiles").insert({
+        id: userId,
+        email: email ?? null,
+        full_name: null,
+      });
+    }
+  },
+
+  async updateFullName(userId: string, fullName: string) {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ full_name: fullName })
+      .eq("id", userId);
+
+    if (error) throw error;
+  },
+
+  async updatePassword(newPassword: string) {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+  },
+};

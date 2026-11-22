@@ -6,6 +6,7 @@ import { ModuleRoute, ModuleView, HomeRedirect } from "@/routes/ModuleRoute";
 import { ThemeSync } from "@/components/ThemeSync";
 import { AppLayout } from "@/layouts/AppLayout";
 import { LoginPage } from "@/pages/auth/LoginPage";
+import { AcceptInvitationPage } from "@/pages/auth/AcceptInvitationPage";
 import { ProductsPage } from "@/pages/products/ProductsPage";
 import { AnalyticsPage } from "@/pages/analytics/AnalyticsPage";
 import { BusinessPage } from "@/pages/business/BusinessPage";
@@ -16,7 +17,7 @@ import { OrderDetailPage } from "@/pages/orders/OrderDetailPage";
 import { VentasPage } from "@/pages/ventas/VentasPage";
 import { AdministracionPage } from "@/pages/administracion/AdministracionPage";
 import { BakeryAnalyticsPage } from "@/pages/analytics/BakeryAnalyticsPage";
-import { ComingSoonPage } from "@/pages/common/ComingSoonPage";
+import { BakeryBusinessPage } from "@/pages/business/BakeryBusinessPage";
 
 // Cada página privada: sesión + organización cargada + layout.
 function PrivatePage({ children }: { children: ReactNode }) {
@@ -34,6 +35,7 @@ function App() {
         <ThemeSync />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/invitacion" element={<AcceptInvitationPage />} />
           <Route
             path="/"
             element={
@@ -128,7 +130,7 @@ function App() {
                 <ModuleView
                   views={{
                     stock: <BusinessPage />,
-                    bakery: <ComingSoonPage title="Gestión del negocio" />,
+                    bakery: <BakeryBusinessPage />,
                   }}
                 />
               </PrivatePage>
