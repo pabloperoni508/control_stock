@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useLoginBrand } from "@/hooks/useLoginBrand";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");
@@ -9,6 +10,7 @@ export function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   const { signIn } = useAuth();
+  const brand = useLoginBrand();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -56,7 +58,7 @@ export function LoginPage() {
         }}
       >
         <h1 style={{ fontSize: "1.5rem", marginBottom: "1.5rem" }}>
-          🥜 Control Stock
+          {brand.label}
         </h1>
 
         <label style={{ display: "block", marginBottom: "0.25rem", fontSize: "0.9rem" }}>
