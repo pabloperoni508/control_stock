@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { applyTheme } from "@/lib/theme";
 import { resolveTitle } from "@/lib/appTitle";
+import { brandFor, cacheBrand } from "@/lib/brand";
 
 const TITLE_CACHE_KEY = "app_title";
 
@@ -30,8 +31,9 @@ function cacheTitle(title: string): void {
 }
 
 /**
- * Aplica el tema y el título de pestaña de la organización activa.
- * Al cerrar sesión se restauran los colores y queda el último título usado.
+ * Aplica el tema, el título de la pestaña y recuerda la marca de la organización
+ * activa (para el login). Al cerrar sesión se restauran los colores y quedan el
+ * último título y la última marca usados en el dispositivo.
  */
 export function ThemeSync() {
   const { organization } = useAuth();
@@ -50,7 +52,10 @@ export function ThemeSync() {
       getDefaultTitle()
     );
     document.title = title;
-    if (kind && name) cacheTitle(title);
+    if (kind && name) {
+      cacheTitle(title);
+      cacheBrand(brandFor({ kind, name }));
+    }
   }, [kind, name]);
 
   return null;
